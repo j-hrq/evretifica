@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.pessoa import Pessoa, PessoaFisica, PessoaJuridica, Telefone
+from app.models.usuario import Usuario
 from app.schemas.pessoa import PessoaInput
 
 
@@ -121,3 +122,43 @@ def atualizar_pessoa(
     pessoa_atualizada = carregar_pessoa(db, pessoa_id)
     assert pessoa_atualizada is not None
     return pessoa_atualizada
+
+
+def excluir_pessoa_se_sem_usuario(db: Session, pessoa_id: int, *, commit: bool = True) -> bool:
+    tem_usuario = db.scalar(select(Usuario.id).where(Usuario.pessoa_id == pessoa_id)) is not None
+    if tem_usuario:
+        return False
+
+    pessoa = carregar_pessoa(db, pessoa_id)
+    if pessoa is None:
+        return False
+
+    try:
+        pf = pessoa.pessoa_fisica
+        pj = pessoa.pessoa_juridica
+        telefones = list(pessoa.telefones)
+
+        pessoa.telefones = []
+        db.flush()
+
+        for tel in telefones:
+            db.delete(tel)
+        db.flush()
+
+        db.delete(pessoa)
+        db.flush()
+
+        if pf is not None:
+            db.delete(pf)
+        if pj is not None:
+            db.delete(pj)
+        db.flush()
+
+        if commit:
+            db.commit()
+    except Exception:
+        if commit:
+            db.rollback()
+        raise
+
+    return True

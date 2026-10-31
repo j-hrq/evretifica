@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
 
 interface HealthResponse {
@@ -8,7 +8,6 @@ interface HealthResponse {
 }
 
 export function Home() {
-  const { usuario, sair } = useAuth()
   const [status, setStatus] = useState<string>("carregando...")
   const [carregando, setCarregando] = useState<boolean>(true)
 
@@ -33,22 +32,17 @@ export function Home() {
   }, [verificarSaude])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
+    <main className="flex min-h-[calc(100vh-57px)] flex-col items-center justify-center gap-4 p-6">
       <h1 className="text-2xl font-bold">Oficina OS</h1>
-      {usuario && (
-        <p className="text-sm text-muted-foreground">
-          Olá, <span className="font-medium text-foreground">{usuario.nome}</span>
-        </p>
-      )}
       <p className="text-muted-foreground">
         Status da API: <span className="font-semibold text-foreground">{status}</span>
       </p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button asChild variant="secondary">
+          <Link to="/clientes">Gerenciar clientes</Link>
+        </Button>
         <Button onClick={() => void verificarSaude()} disabled={carregando}>
           Verificar novamente
-        </Button>
-        <Button variant="outline" onClick={() => void sair()}>
-          Sair
         </Button>
       </div>
     </main>
