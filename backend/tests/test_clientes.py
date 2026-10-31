@@ -1,9 +1,7 @@
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-import app.services.cliente as cliente_service
 from app.models.cliente import Cliente
 from app.models.enums import TipoTelefone
 from app.models.pessoa import Pessoa, PessoaFisica, Telefone, pessoa_telefone
@@ -220,7 +218,7 @@ def test_excluir_cliente_preserva_pessoa_se_ligada_a_usuario(
 
 
 def test_excluir_cliente_com_vinculos_retorna_409(
-    auth_client: TestClient, monkeypatch: pytest.MonkeyPatch
+    auth_client: TestClient,
 ) -> None:
     res = auth_client.post(
         "/api/clientes",
@@ -235,7 +233,22 @@ def test_excluir_cliente_com_vinculos_retorna_409(
     )
     cliente_id = res.json()["id"]
 
-    monkeypatch.setattr(cliente_service, "possui_vinculos_cliente", lambda _db, _id: True)
+    res_marca = auth_client.post(
+        "/api/marcas-veiculo",
+        json={"nome": "Fiat", "ativo": True},
+    )
+    marca_id = res_marca.json()["id"]
+
+    res_veiculo = auth_client.post(
+        "/api/veiculos",
+        json={
+            "cliente_id": cliente_id,
+            "marca_id": marca_id,
+            "modelo": "Uno",
+            "placa": "ABC1234",
+        },
+    )
+    assert res_veiculo.status_code == 201
 
     res_del = auth_client.delete(f"/api/clientes/{cliente_id}")
     assert res_del.status_code == 409

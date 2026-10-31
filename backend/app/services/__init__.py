@@ -21,24 +21,38 @@ from app.services.pessoa import (
     excluir_pessoa_se_sem_usuario,
 )
 from app.services.usuario import autenticar_usuario, criar_usuario_com_pessoa
+from app.services.veiculo import (
+    atualizar_veiculo,
+    criar_veiculo,
+    excluir_veiculo,
+    listar_veiculos,
+    obter_veiculo,
+    possui_vinculos_veiculo,
+)
 
 __all__ = [
     "atualizar_cliente",
     "atualizar_marca_veiculo",
     "atualizar_pessoa",
+    "atualizar_veiculo",
     "autenticar_usuario",
     "carregar_pessoa",
     "criar_cliente",
     "criar_marca_veiculo",
     "criar_pessoa",
     "criar_usuario_com_pessoa",
+    "criar_veiculo",
     "excluir_cliente",
     "excluir_marca_veiculo",
     "excluir_pessoa_se_sem_usuario",
+    "excluir_veiculo",
     "listar_clientes",
     "listar_marcas_veiculo",
+    "listar_veiculos",
     "obter_cliente",
     "obter_marca_veiculo",
+    "obter_veiculo",
     "possui_vinculos_cliente",
     "possui_vinculos_marca_veiculo",
+    "possui_vinculos_veiculo",
 ]

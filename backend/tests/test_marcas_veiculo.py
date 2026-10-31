@@ -1,9 +1,7 @@
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-import app.services.marca_veiculo as marca_service
 from app.models.marca_veiculo import MarcaVeiculo
 from app.seed_marcas import MARCAS_COMUNS_BRASIL, executar_seed_marcas
 
@@ -77,7 +75,7 @@ def test_nome_marca_unico_retorna_409(auth_client: TestClient) -> None:
 
 
 def test_excluir_marca_com_vinculos_retorna_409(
-    auth_client: TestClient, monkeypatch: pytest.MonkeyPatch
+    auth_client: TestClient,
 ) -> None:
     res = auth_client.post(
         "/api/marcas-veiculo",
@@ -85,7 +83,29 @@ def test_excluir_marca_com_vinculos_retorna_409(
     )
     marca_id = res.json()["id"]
 
-    monkeypatch.setattr(marca_service, "possui_vinculos_marca_veiculo", lambda _db, _id: True)
+    res_cliente = auth_client.post(
+        "/api/clientes",
+        json={
+            "ativo": True,
+            "pessoa": {
+                "nome": "Dono Chevrolet",
+                "cpf": "52998224725",
+                "telefones": [],
+            },
+        },
+    )
+    cliente_id = res_cliente.json()["id"]
+
+    res_veiculo = auth_client.post(
+        "/api/veiculos",
+        json={
+            "cliente_id": cliente_id,
+            "marca_id": marca_id,
+            "modelo": "Onix",
+            "placa": "DEF1G23",
+        },
+    )
+    assert res_veiculo.status_code == 201
 
     res_del = auth_client.delete(f"/api/marcas-veiculo/{marca_id}")
     assert res_del.status_code == 409

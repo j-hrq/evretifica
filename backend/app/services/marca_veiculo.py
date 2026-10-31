@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.exceptions import ConflitoError, NaoEncontradoError
 from app.models.marca_veiculo import MarcaVeiculo
+from app.models.veiculo import Veiculo
 from app.schemas.comum import PaginacaoOutput
 from app.schemas.marca_veiculo import MarcaVeiculoInput, MarcaVeiculoOutput
 
@@ -104,12 +105,9 @@ def atualizar_marca_veiculo(db: Session, marca_id: int, dados: MarcaVeiculoInput
 
 
 def possui_vinculos_marca_veiculo(db: Session, marca_id: int) -> bool:
-    """Verifica vínculos da marca com veículos.
-
-    Preparado para ser estendido na fatia 6 (Veículos).
-    """
-    _ = (db, marca_id)
-    return False
+    """Verifica vínculos da marca com veículos."""
+    tem_veiculo = db.scalar(select(Veiculo.id).where(Veiculo.marca_id == marca_id).limit(1))
+    return tem_veiculo is not None
 
 
 def excluir_marca_veiculo(db: Session, marca_id: int) -> None:

@@ -122,3 +122,67 @@ export const marcaVeiculoFormSchema = z.object({
 })
 
 export type MarcaVeiculoFormValues = z.infer<typeof marcaVeiculoFormSchema>
+
+export function normalizarPlaca(valor: string): string {
+  return valor.replace(/[\s-]/g, "").toUpperCase()
+}
+
+export function validarPlaca(valor: string): boolean {
+  const limpa = valor.trim().toUpperCase()
+  if ((limpa.match(/-/g) ?? []).length > 1) {
+    return false
+  }
+  if (limpa.includes("-") && limpa[3] !== "-") {
+    return false
+  }
+  const normalizada = normalizarPlaca(limpa)
+  return /^[A-Z]{3}(?:\d{4}|\d[A-Z]\d{2})$/.test(normalizada)
+}
+
+function validarAnoOpcional(valor: string): boolean {
+  const limpo = valor.trim()
+  if (!limpo) return true
+  if (!/^\d{4}$/.test(limpo)) return false
+  const num = Number(limpo)
+  return num >= 1000 && num <= 9999
+}
+
+function validarKmOpcional(valor: string): boolean {
+  const limpo = valor.trim()
+  if (!limpo) return true
+  if (!/^\d+$/.test(limpo)) return false
+  return Number(limpo) >= 0
+}
+
+export const veiculoFormSchema = z.object({
+  cliente_id: z
+    .number({ message: "Cliente é obrigatório." })
+    .int()
+    .min(1, "Cliente é obrigatório."),
+  marca_id: z
+    .number({ message: "Marca é obrigatória." })
+    .int()
+    .min(1, "Marca é obrigatória."),
+  modelo: z.string().trim().min(1, "Modelo é obrigatório."),
+  placa: z
+    .string()
+    .trim()
+    .min(1, "Placa é obrigatória.")
+    .refine(
+      (v) => validarPlaca(v),
+      "Placa inválida. Use o padrão AAA9999 ou AAA9A99.",
+    ),
+  ano_fabricacao: z
+    .string()
+    .refine(validarAnoOpcional, "Ano deve conter 4 dígitos."),
+  ano_modelo: z
+    .string()
+    .refine(validarAnoOpcional, "Ano deve conter 4 dígitos."),
+  cor: z.string(),
+  km: z
+    .string()
+    .refine(validarKmOpcional, "Quilometragem deve ser um inteiro positivo."),
+  observacao: z.string(),
+})
+
+export type VeiculoFormValues = z.infer<typeof veiculoFormSchema>

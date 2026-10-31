@@ -10,6 +10,12 @@ from app.schemas.pessoa import (
     validar_cnpj,
     validar_cpf,
 )
+from app.schemas.veiculo import (
+    VeiculoInput,
+    VeiculoOutput,
+    normalizar_placa,
+    validar_placa,
+)
 
 __all__ = [
     "ClienteInput",
@@ -23,6 +29,10 @@ __all__ = [
     "TelefoneInput",
     "TelefoneOutput",
     "UsuarioOutput",
+    "VeiculoInput",
+    "VeiculoOutput",
+    "normalizar_placa",
     "validar_cnpj",
     "validar_cpf",
+    "validar_placa",
 ]

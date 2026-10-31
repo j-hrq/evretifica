@@ -7,6 +7,7 @@ import { Clientes } from "@/pages/Clientes"
 import { Home } from "@/pages/Home"
 import { Login } from "@/pages/Login"
 import { MarcasVeiculo } from "@/pages/MarcasVeiculo"
+import { Veiculos } from "@/pages/Veiculos"
 
 function LayoutAutenticado({ children }: { children: ReactNode }) {
   const { usuario, sair } = useAuth()
@@ -30,6 +31,12 @@ function LayoutAutenticado({ children }: { children: ReactNode }) {
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               Marcas
+            </Link>
+            <Link
+              to="/veiculos"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Veículos
             </Link>
           </nav>
           <div className="flex items-center gap-3">
@@ -105,6 +112,14 @@ export function AppRoutes() {
             element={
               <RotaProtegida>
                 <MarcasVeiculo />
+              </RotaProtegida>
+            }
+          />
+          <Route
+            path="/veiculos"
+            element={
+              <RotaProtegida>
+                <Veiculos />
               </RotaProtegida>
             }
           />

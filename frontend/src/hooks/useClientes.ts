@@ -69,16 +69,18 @@ async function extrairErro(res: Response, padrao: string): Promise<string> {
 
 export function useClientes(params: {
   q?: string
+  ativo?: boolean
   page?: number
   per_page?: number
 }) {
-  const { q = "", page = 1, per_page = 10 } = params
+  const { q = "", ativo, page = 1, per_page = 10 } = params
 
   return useQuery<PaginacaoOutput<Cliente>>({
-    queryKey: ["clientes", { q, page, per_page }],
+    queryKey: ["clientes", { q, ativo, page, per_page }],
     queryFn: async () => {
       const search = new URLSearchParams()
       if (q.trim()) search.set("q", q.trim())
+      if (ativo !== undefined) search.set("ativo", String(ativo))
       search.set("page", String(page))
       search.set("per_page", String(per_page))
 
