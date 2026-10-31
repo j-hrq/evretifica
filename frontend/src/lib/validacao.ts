@@ -115,3 +115,10 @@ export const clienteFormSchema = z
   })
 
 export type ClienteFormValues = z.infer<typeof clienteFormSchema>
+
+export const marcaVeiculoFormSchema = z.object({
+  nome: z.string().trim().min(1, "Nome é obrigatório."),
+  ativo: z.boolean(),
+})
+
+export type MarcaVeiculoFormValues = z.infer<typeof marcaVeiculoFormSchema>

@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth"
 import { Clientes } from "@/pages/Clientes"
 import { Home } from "@/pages/Home"
 import { Login } from "@/pages/Login"
+import { MarcasVeiculo } from "@/pages/MarcasVeiculo"
 
 function LayoutAutenticado({ children }: { children: ReactNode }) {
   const { usuario, sair } = useAuth()
@@ -23,6 +24,12 @@ function LayoutAutenticado({ children }: { children: ReactNode }) {
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               Clientes
+            </Link>
+            <Link
+              to="/marcas-veiculo"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Marcas
             </Link>
           </nav>
           <div className="flex items-center gap-3">
@@ -90,6 +97,14 @@ export function AppRoutes() {
             element={
               <RotaProtegida>
                 <Clientes />
+              </RotaProtegida>
+            }
+          />
+          <Route
+            path="/marcas-veiculo"
+            element={
+              <RotaProtegida>
+                <MarcasVeiculo />
               </RotaProtegida>
             }
           />
