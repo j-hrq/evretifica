@@ -102,19 +102,33 @@ class PessoaInput(BaseModel):
             raise ValueError("Nome é obrigatório.")
         return limpo
 
+    @field_validator("email")
+    @classmethod
+    def _normalizar_email(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        limpo = v.strip()
+        return limpo if limpo else None
+
     @field_validator("cpf")
     @classmethod
     def _validar_cpf_campo(cls, v: str | None) -> str | None:
         if v is None:
             return None
-        return validar_cpf(v)
+        limpo = v.strip()
+        if not limpo:
+            return None
+        return validar_cpf(limpo)
 
     @field_validator("cnpj")
     @classmethod
     def _validar_cnpj_campo(cls, v: str | None) -> str | None:
         if v is None:
             return None
-        return validar_cnpj(v)
+        limpo = v.strip()
+        if not limpo:
+            return None
+        return validar_cnpj(limpo)
 
     @model_validator(mode="after")
     def _validar_exatamente_um_documento(self) -> "PessoaInput":
@@ -123,3 +137,16 @@ class PessoaInput(BaseModel):
         if tem_cpf == tem_cnpj:
             raise ValueError("Informe exatamente um documento: CPF ou CNPJ.")
         return self
+
+
+class PessoaOutput(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nome: str
+    email: str | None = None
+    cpf: str | None = None
+    cnpj: str | None = None
+    telefones: list[TelefoneOutput] = Field(default_factory=list)
+    data_criacao: datetime
+    data_alteracao: datetime

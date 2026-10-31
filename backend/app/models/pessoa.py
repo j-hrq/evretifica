@@ -88,3 +88,11 @@ class Pessoa(Base):
     pessoa_fisica: Mapped[PessoaFisica | None] = relationship("PessoaFisica")
     pessoa_juridica: Mapped[PessoaJuridica | None] = relationship("PessoaJuridica")
     telefones: Mapped[list[Telefone]] = relationship("Telefone", secondary=pessoa_telefone)
+
+    @property
+    def cpf(self) -> str | None:
+        return self.pessoa_fisica.cpf if self.pessoa_fisica is not None else None
+
+    @property
+    def cnpj(self) -> str | None:
+        return self.pessoa_juridica.cnpj if self.pessoa_juridica is not None else None
