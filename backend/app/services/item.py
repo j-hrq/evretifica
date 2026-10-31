@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.exceptions import ConflitoError, NaoEncontradoError
 from app.models.item import Item
 from app.models.orcamento import ItemOrcamento
+from app.models.ordem_servico import ItemOrdemServico
 from app.schemas.comum import PaginacaoOutput
 from app.schemas.item import ItemInput, ItemOutput
 
@@ -80,14 +81,16 @@ def atualizar_item(db: Session, item_id: int, dados: ItemInput) -> Item:
 
 
 def possui_vinculos_item(db: Session, item_id: int) -> bool:
-    """Verifica vínculos do item com linhas de orçamento ou OS.
-
-    Preparado para ser estendido na fatia 9 (OS).
-    """
+    """Verifica vínculos do item com linhas de orçamento ou OS."""
     tem_orcamento = db.scalar(
         select(ItemOrcamento.id).where(ItemOrcamento.item_id == item_id).limit(1)
     )
-    return tem_orcamento is not None
+    if tem_orcamento is not None:
+        return True
+    tem_os = db.scalar(
+        select(ItemOrdemServico.id).where(ItemOrdemServico.item_id == item_id).limit(1)
+    )
+    return tem_os is not None
 
 
 def excluir_item(db: Session, item_id: int) -> None:

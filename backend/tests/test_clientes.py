@@ -326,3 +326,73 @@ def test_excluir_cliente_com_orcamento_retorna_409_mesmo_apos_transferir_veiculo
     res_del = auth_client.delete(f"/api/clientes/{cliente_1_id}")
     assert res_del.status_code == 409
     assert "vínculos" in res_del.json()["detail"]
+
+
+def test_excluir_cliente_com_ordem_servico_retorna_409_mesmo_apos_transferir_veiculo(
+    auth_client: TestClient,
+) -> None:
+    res_c1 = auth_client.post(
+        "/api/clientes",
+        json={
+            "ativo": True,
+            "pessoa": {
+                "nome": "Dono OS Original",
+                "cpf": "52998224725",
+                "telefones": [],
+            },
+        },
+    )
+    cliente_1_id = res_c1.json()["id"]
+
+    res_c2 = auth_client.post(
+        "/api/clientes",
+        json={
+            "ativo": True,
+            "pessoa": {
+                "nome": "Novo Dono OS",
+                "cpf": "11144477735",
+                "telefones": [],
+            },
+        },
+    )
+    cliente_2_id = res_c2.json()["id"]
+
+    res_marca = auth_client.post(
+        "/api/marcas-veiculo",
+        json={"nome": "Honda", "ativo": True},
+    )
+    marca_id = res_marca.json()["id"]
+
+    res_veiculo = auth_client.post(
+        "/api/veiculos",
+        json={
+            "cliente_id": cliente_1_id,
+            "marca_id": marca_id,
+            "modelo": "Fit",
+            "placa": "JKL1234",
+        },
+    )
+    veiculo_id = res_veiculo.json()["id"]
+
+    res_os = auth_client.post(
+        "/api/ordens-servico",
+        json={
+            "veiculo_id": veiculo_id,
+            "itens": [],
+        },
+    )
+    assert res_os.status_code == 201
+
+    auth_client.put(
+        f"/api/veiculos/{veiculo_id}",
+        json={
+            "cliente_id": cliente_2_id,
+            "marca_id": marca_id,
+            "modelo": "Fit",
+            "placa": "JKL1234",
+        },
+    )
+
+    res_del = auth_client.delete(f"/api/clientes/{cliente_1_id}")
+    assert res_del.status_code == 409
+    assert "vínculos" in res_del.json()["detail"]

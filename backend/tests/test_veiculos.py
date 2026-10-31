@@ -255,3 +255,34 @@ def test_excluir_veiculo_com_vinculos_retorna_409(
     res_del = auth_client.delete(f"/api/veiculos/{veiculo_id}")
     assert res_del.status_code == 409
     assert "vínculos" in res_del.json()["detail"]
+
+
+def test_excluir_veiculo_com_ordem_servico_retorna_409(
+    auth_client: TestClient,
+) -> None:
+    cliente_id = _criar_cliente(auth_client, "Cliente OS Veículo", "52998224725")
+    marca_id = _criar_marca(auth_client, "Nissan")
+
+    res = auth_client.post(
+        "/api/veiculos",
+        json={
+            "cliente_id": cliente_id,
+            "marca_id": marca_id,
+            "modelo": "March",
+            "placa": "MNO1P23",
+        },
+    )
+    veiculo_id = res.json()["id"]
+
+    res_os = auth_client.post(
+        "/api/ordens-servico",
+        json={
+            "veiculo_id": veiculo_id,
+            "itens": [],
+        },
+    )
+    assert res_os.status_code == 201
+
+    res_del = auth_client.delete(f"/api/veiculos/{veiculo_id}")
+    assert res_del.status_code == 409
+    assert "vínculos" in res_del.json()["detail"]

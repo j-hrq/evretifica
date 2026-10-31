@@ -362,3 +362,18 @@ export const orcamentoFormSchema = z.object({
 })
 
 export type OrcamentoFormValues = z.infer<typeof orcamentoFormSchema>
+
+export const ordemServicoFormSchema = z.object({
+  veiculo_id: z
+    .number({ message: "Veículo é obrigatório." })
+    .int()
+    .min(1, "Veículo é obrigatório."),
+  km_entrada: z
+    .string()
+    .refine(validarKmOpcional, "Quilometragem deve ser um inteiro positivo."),
+  status_id: z.number().int().min(1).max(6),
+  descricao: z.string(),
+  itens: z.array(itemOrcamentoFormSchema),
+})
+
+export type OrdemServicoFormValues = z.infer<typeof ordemServicoFormSchema>

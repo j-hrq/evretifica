@@ -9,6 +9,7 @@ import { Itens } from "@/pages/Itens"
 import { Login } from "@/pages/Login"
 import { MarcasVeiculo } from "@/pages/MarcasVeiculo"
 import { Orcamentos } from "@/pages/Orcamentos"
+import { OrdensServico } from "@/pages/OrdensServico"
 import { Veiculos } from "@/pages/Veiculos"
 
 function LayoutAutenticado({ children }: { children: ReactNode }) {
@@ -51,6 +52,12 @@ function LayoutAutenticado({ children }: { children: ReactNode }) {
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               Orçamentos
+            </Link>
+            <Link
+              to="/ordens-servico"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              OS
             </Link>
           </nav>
           <div className="flex items-center gap-3">
@@ -150,6 +157,14 @@ export function AppRoutes() {
             element={
               <RotaProtegida>
                 <Orcamentos />
+              </RotaProtegida>
+            }
+          />
+          <Route
+            path="/ordens-servico"
+            element={
+              <RotaProtegida>
+                <OrdensServico />
               </RotaProtegida>
             }
           />

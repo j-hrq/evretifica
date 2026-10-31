@@ -10,6 +10,12 @@ from app.schemas.orcamento import (
     OrcamentoOutput,
     calcular_total_item,
 )
+from app.schemas.ordem_servico import (
+    ItemOrdemServicoInput,
+    ItemOrdemServicoOutput,
+    OrdemServicoInput,
+    OrdemServicoOutput,
+)
 from app.schemas.pessoa import (
     PessoaInput,
     PessoaOutput,
@@ -31,12 +37,16 @@ __all__ = [
     "ItemInput",
     "ItemOrcamentoInput",
     "ItemOrcamentoOutput",
+    "ItemOrdemServicoInput",
+    "ItemOrdemServicoOutput",
     "ItemOutput",
     "LoginInput",
     "MarcaVeiculoInput",
     "MarcaVeiculoOutput",
     "OrcamentoInput",
     "OrcamentoOutput",
+    "OrdemServicoInput",
+    "OrdemServicoOutput",
     "PaginacaoOutput",
     "PessoaInput",
     "PessoaOutput",

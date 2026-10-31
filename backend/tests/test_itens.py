@@ -129,3 +129,63 @@ def test_excluir_item_com_vinculos_retorna_409(
     res_del = auth_client.delete(f"/api/itens/{item_id}")
     assert res_del.status_code == 409
     assert "em uso" in res_del.json()["detail"] or "vínculos" in res_del.json()["detail"]
+
+
+def test_excluir_item_usado_em_ordem_servico_retorna_409(
+    auth_client: TestClient,
+) -> None:
+    res = auth_client.post(
+        "/api/itens",
+        json={"nome": "Troca de bronzinas", "ativo": True},
+    )
+    item_id = res.json()["id"]
+
+    res_cliente = auth_client.post(
+        "/api/clientes",
+        json={
+            "ativo": True,
+            "pessoa": {
+                "nome": "Cliente Item OS",
+                "cpf": "52998224725",
+                "telefones": [],
+            },
+        },
+    )
+    cliente_id = res_cliente.json()["id"]
+
+    res_marca = auth_client.post(
+        "/api/marcas-veiculo",
+        json={"nome": "Peugeot", "ativo": True},
+    )
+    marca_id = res_marca.json()["id"]
+
+    res_veiculo = auth_client.post(
+        "/api/veiculos",
+        json={
+            "cliente_id": cliente_id,
+            "marca_id": marca_id,
+            "modelo": "208",
+            "placa": "QRS4T56",
+        },
+    )
+    veiculo_id = res_veiculo.json()["id"]
+
+    res_os = auth_client.post(
+        "/api/ordens-servico",
+        json={
+            "veiculo_id": veiculo_id,
+            "itens": [
+                {
+                    "item_id": item_id,
+                    "tipo_id": int(TipoItem.AMBOS),
+                    "quantidade": "1.00",
+                    "valor_unitario": 22000,
+                }
+            ],
+        },
+    )
+    assert res_os.status_code == 201
+
+    res_del = auth_client.delete(f"/api/itens/{item_id}")
+    assert res_del.status_code == 409
+    assert "em uso" in res_del.json()["detail"] or "vínculos" in res_del.json()["detail"]
