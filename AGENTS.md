@@ -37,6 +37,7 @@ Backend (em `backend/`):
 - Lint: `ruff check . && ruff format --check .`
 - Migration: `alembic revision --autogenerate -m "mensagem"` e `alembic upgrade head`
 - Seed do usuário: `python -m app.seed`
+- Seed de marcas de veículo: `python -m app.seed_marcas`
 
 Frontend (em `frontend/`):
 - Instalar: `npm install`

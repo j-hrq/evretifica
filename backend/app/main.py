@@ -6,6 +6,9 @@ from app.exceptions import ConflitoError, NaoEncontradoError, RegraNegocioError
 from app.routers.auth import router as auth_router
 from app.routers.clientes import router as clientes_router
 from app.routers.health import router as health_router
+from app.routers.itens import router as itens_router
+from app.routers.marcas_veiculo import router as marcas_veiculo_router
+from app.routers.veiculos import router as veiculos_router
 
 app = FastAPI(
     title="Oficina OS",
@@ -40,3 +43,6 @@ def _tratar_regra_negocio(_request: Request, exc: RegraNegocioError) -> JSONResp
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(clientes_router)
+app.include_router(marcas_veiculo_router)
+app.include_router(veiculos_router)
+app.include_router(itens_router)
