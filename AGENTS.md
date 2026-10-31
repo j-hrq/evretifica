@@ -36,6 +36,7 @@ Backend (em `backend/`):
 - Testes: `pytest`
 - Lint: `ruff check . && ruff format --check .`
 - Migration: `alembic revision --autogenerate -m "mensagem"` e `alembic upgrade head`
+- Seed do usuário: `python -m app.seed`
 
 Frontend (em `frontend/`):
 - Instalar: `npm install`
