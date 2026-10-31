@@ -1,3 +1,4 @@
+from app.schemas.auth import LoginInput, UsuarioOutput
 from app.schemas.pessoa import (
     PessoaInput,
     TelefoneInput,
@@ -7,9 +8,11 @@ from app.schemas.pessoa import (
 )
 
 __all__ = [
+    "LoginInput",
     "PessoaInput",
     "TelefoneInput",
     "TelefoneOutput",
+    "UsuarioOutput",
     "validar_cnpj",
     "validar_cpf",
 ]
