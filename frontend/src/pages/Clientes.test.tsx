@@ -160,4 +160,75 @@ describe("Página de Clientes", () => {
       )
     })
   })
+
+  it("filtra por status e permite tentar novamente após erro de carregamento", async () => {
+    let falhar = true
+    const urlsChamadas: string[] = []
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = typeof input === "string" ? input : input.toString()
+
+      if (url === "/api/auth/me") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: 1,
+            login: "admin",
+            pessoa_id: 1,
+            nome: "Oficina Admin",
+          }),
+        } as Response
+      }
+
+      if (url.startsWith("/api/clientes")) {
+        urlsChamadas.push(url)
+        if (falhar) {
+          return {
+            ok: false,
+            status: 500,
+            json: async () => ({ detail: "Falha temporária." }),
+          } as Response
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            items: [],
+            total: 0,
+            page: 1,
+            per_page: 10,
+            total_pages: 1,
+          }),
+        } as Response
+      }
+
+      throw new Error(`Chamada inesperada: ${url}`)
+    })
+
+    render(
+      <MemoryRouter initialEntries={["/clientes"]}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Falha temporária.")).toBeInTheDocument()
+    })
+
+    falhar = false
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }))
+
+    await waitFor(() => {
+      expect(screen.getByText("Nenhum cliente encontrado.")).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText("Filtrar por status"), {
+      target: { value: "true" },
+    })
+
+    await waitFor(() => {
+      expect(urlsChamadas.some((u) => u.includes("ativo=true"))).toBe(true)
+    })
+  })
 })

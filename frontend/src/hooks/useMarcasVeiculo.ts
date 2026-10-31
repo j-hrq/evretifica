@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { PaginacaoOutput } from "@/hooks/useClientes"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, extrairErro } from "@/lib/api"
 
 export interface MarcaVeiculo {
   id: number
@@ -13,18 +13,6 @@ export interface MarcaVeiculo {
 export interface MarcaVeiculoPayload {
   nome: string
   ativo: boolean
-}
-
-async function extrairErro(res: Response, padrao: string): Promise<string> {
-  try {
-    const corpo = (await res.json()) as { detail?: string }
-    if (typeof corpo.detail === "string") {
-      return corpo.detail
-    }
-  } catch {
-    // mantém mensagem padrão
-  }
-  return padrao
 }
 
 export function useMarcasVeiculo(params: {

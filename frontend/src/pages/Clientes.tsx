@@ -64,6 +64,7 @@ function valoresIniciais(cliente: Cliente | null): ClienteFormValues {
 
 export function Clientes() {
   const [busca, setBusca] = useState<string>("")
+  const [filtroAtivo, setFiltroAtivo] = useState<string>("")
   const [page, setPage] = useState<number>(1)
   const [modalAberto, setModalAberto] = useState<boolean>(false)
   const [clienteEmEdicao, setClienteEmEdicao] = useState<Cliente | null>(null)
@@ -73,8 +74,12 @@ export function Clientes() {
   const [erroFormulario, setErroFormulario] = useState<string | null>(null)
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
 
-  const { data, isLoading, isError, error } = useClientes({
+  const ativoParam =
+    filtroAtivo === "true" ? true : filtroAtivo === "false" ? false : undefined
+
+  const { data, isLoading, isError, error, refetch } = useClientes({
     q: busca,
+    ativo: ativoParam,
     page,
     per_page: 10,
   })
@@ -172,22 +177,39 @@ export function Clientes() {
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Clientes</h1>
         <Button onClick={abrirNovo}>Novo cliente</Button>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Input
-          placeholder="Buscar por nome, e-mail, CPF ou CNPJ..."
-          aria-label="Buscar clientes"
-          value={busca}
-          onChange={(e) => {
-            setBusca(e.target.value)
-            setPage(1)
-          }}
-        />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="sm:col-span-2">
+          <Input
+            placeholder="Buscar por nome, e-mail, CPF ou CNPJ..."
+            aria-label="Buscar clientes"
+            value={busca}
+            onChange={(e) => {
+              setBusca(e.target.value)
+              setPage(1)
+            }}
+          />
+        </div>
+        <div>
+          <select
+            aria-label="Filtrar por status"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            value={filtroAtivo}
+            onChange={(e) => {
+              setFiltroAtivo(e.target.value)
+              setPage(1)
+            }}
+          >
+            <option value="">Todos os status</option>
+            <option value="true">Ativos</option>
+            <option value="false">Inativos</option>
+          </select>
+        </div>
       </div>
 
       {isLoading && (
@@ -195,9 +217,16 @@ export function Clientes() {
       )}
 
       {isError && (
-        <p role="alert" className="text-destructive">
-          {error instanceof Error ? error.message : "Erro ao carregar clientes."}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="alert" className="text-destructive">
+            {error instanceof Error
+              ? error.message
+              : "Erro ao carregar clientes."}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            Tentar novamente
+          </Button>
+        </div>
       )}
 
       {!isLoading && !isError && data && data.items.length === 0 && (
@@ -226,10 +255,10 @@ export function Clientes() {
                   <TableCell>
                     {cliente.pessoa.cpf ?? cliente.pessoa.cnpj}
                   </TableCell>
-                  <TableCell>{cliente.pessoa.email ?? "—"}</TableCell>
+                  <TableCell>{cliente.pessoa.email ?? "-"}</TableCell>
                   <TableCell>
                     {cliente.pessoa.telefones.length === 0
-                      ? "—"
+                      ? "-"
                       : cliente.pessoa.telefones
                           .map(
                             (t) =>
@@ -324,12 +353,12 @@ export function Clientes() {
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="tipo_documento">Tipo</Label>
                 <select
                   id="tipo_documento"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                   {...register("tipo_documento")}
                 >
                   <option value="cpf">CPF</option>
@@ -337,7 +366,7 @@ export function Clientes() {
                 </select>
               </div>
 
-              <div className="col-span-2 flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
                 <Label htmlFor="documento">
                   {tipoDocumento === "cnpj" ? "CNPJ" : "CPF"}
                 </Label>
@@ -354,7 +383,7 @@ export function Clientes() {
               <input
                 id="ativo"
                 type="checkbox"
-                className="h-4 w-4 rounded border-input"
+                className="h-4 w-4 rounded border-input outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                 {...register("ativo")}
               />
               <Label htmlFor="ativo">Ativo</Label>
@@ -382,9 +411,9 @@ export function Clientes() {
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="grid grid-cols-12 items-start gap-2 rounded-md border p-2"
+                  className="grid grid-cols-1 items-start gap-2 rounded-md border p-2 sm:grid-cols-12"
                 >
-                  <div className="col-span-2 flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 sm:col-span-2">
                     <Label htmlFor={`telefones.${index}.ddd`}>DDD</Label>
                     <Input
                       id={`telefones.${index}.ddd`}
@@ -398,7 +427,7 @@ export function Clientes() {
                     )}
                   </div>
 
-                  <div className="col-span-5 flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 sm:col-span-5">
                     <Label htmlFor={`telefones.${index}.telefone`}>Número</Label>
                     <Input
                       id={`telefones.${index}.telefone`}
@@ -412,13 +441,13 @@ export function Clientes() {
                     )}
                   </div>
 
-                  <div className="col-span-3 flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 sm:col-span-3">
                     <Label htmlFor={`telefones.${index}.tipo_id`}>
                       Tipo de telefone
                     </Label>
                     <select
                       id={`telefones.${index}.tipo_id`}
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs"
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                       {...register(`telefones.${index}.tipo_id`, {
                         valueAsNumber: true,
                       })}
@@ -430,7 +459,7 @@ export function Clientes() {
                     </select>
                   </div>
 
-                  <div className="col-span-2 flex flex-col gap-1 pt-5">
+                  <div className="flex flex-col gap-1 sm:col-span-2 sm:pt-5">
                     <Button
                       type="button"
                       variant="destructive"
@@ -506,6 +535,6 @@ export function Clientes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   )
 }

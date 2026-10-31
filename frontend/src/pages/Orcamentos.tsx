@@ -98,7 +98,7 @@ export function Orcamentos() {
 
   const statusIdParam = filtroStatus ? Number(filtroStatus) : undefined
 
-  const { data, isLoading, isError, error } = useOrcamentos({
+  const { data, isLoading, isError, error, refetch } = useOrcamentos({
     q: busca,
     status_id: statusIdParam,
     page,
@@ -264,7 +264,7 @@ export function Orcamentos() {
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Orçamentos</h1>
         <Button onClick={abrirNovo}>Novo orçamento</Button>
@@ -285,7 +285,7 @@ export function Orcamentos() {
         <div>
           <select
             aria-label="Filtrar por status"
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             value={filtroStatus}
             onChange={(e) => {
               setFiltroStatus(e.target.value)
@@ -307,11 +307,16 @@ export function Orcamentos() {
       )}
 
       {isError && (
-        <p role="alert" className="text-destructive">
-          {error instanceof Error
-            ? error.message
-            : "Erro ao carregar orçamentos."}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="alert" className="text-destructive">
+            {error instanceof Error
+              ? error.message
+              : "Erro ao carregar orçamentos."}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            Tentar novamente
+          </Button>
+        </div>
       )}
 
       {!isLoading && !isError && data && data.items.length === 0 && (
@@ -440,7 +445,7 @@ export function Orcamentos() {
                 <Label htmlFor="veiculo_id">Veículo</Label>
                 <select
                   id="veiculo_id"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                   {...register("veiculo_id", { valueAsNumber: true })}
                 >
                   <option value={0}>Selecione um veículo...</option>
@@ -459,8 +464,16 @@ export function Orcamentos() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <Label>Cliente do orçamento</Label>
-                <div className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm">
+                <span
+                  id="rotulo_cliente_orcamento"
+                  className="text-sm font-medium"
+                >
+                  Cliente do orçamento
+                </span>
+                <div
+                  aria-labelledby="rotulo_cliente_orcamento"
+                  className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm"
+                >
                   {nomeClienteExibido}
                 </div>
               </div>
@@ -496,9 +509,15 @@ export function Orcamentos() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <Label>Vencimento</Label>
+                <span
+                  id="rotulo_vencimento_orcamento"
+                  className="text-sm font-medium"
+                >
+                  Vencimento
+                </span>
                 <div
                   aria-label="Vencimento calculado"
+                  aria-labelledby="rotulo_vencimento_orcamento"
                   className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm"
                 >
                   {formatarDataIsoParaBr(vencimentoCalculado)}
@@ -509,7 +528,7 @@ export function Orcamentos() {
                 <Label htmlFor="status_id">Status</Label>
                 <select
                   id="status_id"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                   {...register("status_id", { valueAsNumber: true })}
                 >
                   {Object.entries(SITUACAO_AVALIACAO_LABELS).map(
@@ -558,13 +577,13 @@ export function Orcamentos() {
                 return (
                   <div
                     key={field.id}
-                    className="grid grid-cols-12 items-start gap-2 rounded-md border p-2"
+                    className="grid grid-cols-1 items-start gap-2 rounded-md border p-2 sm:grid-cols-12"
                   >
-                    <div className="col-span-4 flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 sm:col-span-4">
                       <Label htmlFor={`itens.${index}.item_id`}>Item</Label>
                       <select
                         id={`itens.${index}.item_id`}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                         {...register(`itens.${index}.item_id`, {
                           valueAsNumber: true,
                         })}
@@ -583,11 +602,11 @@ export function Orcamentos() {
                       )}
                     </div>
 
-                    <div className="col-span-2 flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 sm:col-span-2">
                       <Label htmlFor={`itens.${index}.tipo_id`}>Tipo</Label>
                       <select
                         id={`itens.${index}.tipo_id`}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                         {...register(`itens.${index}.tipo_id`, {
                           valueAsNumber: true,
                         })}
@@ -602,7 +621,7 @@ export function Orcamentos() {
                       </select>
                     </div>
 
-                    <div className="col-span-2 flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 sm:col-span-2">
                       <Label htmlFor={`itens.${index}.quantidade`}>Qtd.</Label>
                       <Input
                         id={`itens.${index}.quantidade`}
@@ -616,7 +635,7 @@ export function Orcamentos() {
                       )}
                     </div>
 
-                    <div className="col-span-2 flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 sm:col-span-2">
                       <Label htmlFor={`itens.${index}.valor_unitario`}>
                         Valor unit. (R$)
                       </Label>
@@ -632,8 +651,8 @@ export function Orcamentos() {
                       )}
                     </div>
 
-                    <div className="col-span-2 flex flex-col gap-1">
-                      <Label>Subtotal</Label>
+                    <div className="flex flex-col gap-1 sm:col-span-2">
+                      <span className="text-sm font-medium">Subtotal</span>
                       <div className="flex h-9 items-center justify-between gap-1">
                         <span className="text-xs font-medium">
                           {formatarMoedaCentavos(subtotalLinha)}
@@ -721,6 +740,6 @@ export function Orcamentos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   )
 }
