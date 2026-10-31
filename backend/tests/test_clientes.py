@@ -253,3 +253,76 @@ def test_excluir_cliente_com_vinculos_retorna_409(
     res_del = auth_client.delete(f"/api/clientes/{cliente_id}")
     assert res_del.status_code == 409
     assert "vínculos" in res_del.json()["detail"]
+
+
+def test_excluir_cliente_com_orcamento_retorna_409_mesmo_apos_transferir_veiculo(
+    auth_client: TestClient,
+) -> None:
+    res_c1 = auth_client.post(
+        "/api/clientes",
+        json={
+            "ativo": True,
+            "pessoa": {
+                "nome": "Dono Original",
+                "cpf": "52998224725",
+                "telefones": [],
+            },
+        },
+    )
+    cliente_1_id = res_c1.json()["id"]
+
+    res_c2 = auth_client.post(
+        "/api/clientes",
+        json={
+            "ativo": True,
+            "pessoa": {
+                "nome": "Novo Dono",
+                "cpf": "11144477735",
+                "telefones": [],
+            },
+        },
+    )
+    cliente_2_id = res_c2.json()["id"]
+
+    res_marca = auth_client.post(
+        "/api/marcas-veiculo",
+        json={"nome": "Ford", "ativo": True},
+    )
+    marca_id = res_marca.json()["id"]
+
+    res_veiculo = auth_client.post(
+        "/api/veiculos",
+        json={
+            "cliente_id": cliente_1_id,
+            "marca_id": marca_id,
+            "modelo": "Ka",
+            "placa": "DEF5678",
+        },
+    )
+    veiculo_id = res_veiculo.json()["id"]
+
+    res_orc = auth_client.post(
+        "/api/orcamentos",
+        json={
+            "veiculo_id": veiculo_id,
+            "itens": [],
+        },
+    )
+    assert res_orc.status_code == 201
+
+    # Transfere o veículo para o cliente 2
+    res_transf = auth_client.put(
+        f"/api/veiculos/{veiculo_id}",
+        json={
+            "cliente_id": cliente_2_id,
+            "marca_id": marca_id,
+            "modelo": "Ka",
+            "placa": "DEF5678",
+        },
+    )
+    assert res_transf.status_code == 200
+
+    # Cliente 1 não tem mais veículos, mas tem orçamento vinculado -> 409
+    res_del = auth_client.delete(f"/api/clientes/{cliente_1_id}")
+    assert res_del.status_code == 409
+    assert "vínculos" in res_del.json()["detail"]

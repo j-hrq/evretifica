@@ -8,6 +8,7 @@ import { Home } from "@/pages/Home"
 import { Itens } from "@/pages/Itens"
 import { Login } from "@/pages/Login"
 import { MarcasVeiculo } from "@/pages/MarcasVeiculo"
+import { Orcamentos } from "@/pages/Orcamentos"
 import { Veiculos } from "@/pages/Veiculos"
 
 function LayoutAutenticado({ children }: { children: ReactNode }) {
@@ -44,6 +45,12 @@ function LayoutAutenticado({ children }: { children: ReactNode }) {
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               Itens
+            </Link>
+            <Link
+              to="/orcamentos"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Orçamentos
             </Link>
           </nav>
           <div className="flex items-center gap-3">
@@ -135,6 +142,14 @@ export function AppRoutes() {
             element={
               <RotaProtegida>
                 <Itens />
+              </RotaProtegida>
+            }
+          />
+          <Route
+            path="/orcamentos"
+            element={
+              <RotaProtegida>
+                <Orcamentos />
               </RotaProtegida>
             }
           />
