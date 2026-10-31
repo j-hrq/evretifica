@@ -1,6 +1,7 @@
 from app.schemas.auth import LoginInput, UsuarioOutput
 from app.schemas.cliente import ClienteInput, ClienteOutput
 from app.schemas.comum import PaginacaoOutput
+from app.schemas.item import ItemInput, ItemOutput
 from app.schemas.marca_veiculo import MarcaVeiculoInput, MarcaVeiculoOutput
 from app.schemas.pessoa import (
     PessoaInput,
@@ -20,6 +21,8 @@ from app.schemas.veiculo import (
 __all__ = [
     "ClienteInput",
     "ClienteOutput",
+    "ItemInput",
+    "ItemOutput",
     "LoginInput",
     "MarcaVeiculoInput",
     "MarcaVeiculoOutput",

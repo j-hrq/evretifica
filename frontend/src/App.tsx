@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { AuthProvider, useAuth } from "@/hooks/useAuth"
 import { Clientes } from "@/pages/Clientes"
 import { Home } from "@/pages/Home"
+import { Itens } from "@/pages/Itens"
 import { Login } from "@/pages/Login"
 import { MarcasVeiculo } from "@/pages/MarcasVeiculo"
 import { Veiculos } from "@/pages/Veiculos"
@@ -37,6 +38,12 @@ function LayoutAutenticado({ children }: { children: ReactNode }) {
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               Veículos
+            </Link>
+            <Link
+              to="/itens"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Itens
             </Link>
           </nav>
           <div className="flex items-center gap-3">
@@ -120,6 +127,14 @@ export function AppRoutes() {
             element={
               <RotaProtegida>
                 <Veiculos />
+              </RotaProtegida>
+            }
+          />
+          <Route
+            path="/itens"
+            element={
+              <RotaProtegida>
+                <Itens />
               </RotaProtegida>
             }
           />
