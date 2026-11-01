@@ -1,0 +1,8 @@
+{
+  "name": "oficina-os",
+  "private": true,
+  "scripts": {
+    "backend": "cd backend && . .venv/bin/activate && uvicorn app.main:app --reload --port 8000",
+    "dev:backend": "cd backend && . .venv/bin/activate && uvicorn app.main:app --reload --port 8000"
+  }
+}
