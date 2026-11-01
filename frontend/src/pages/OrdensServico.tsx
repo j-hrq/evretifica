@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { FileDown } from "lucide-react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { CampoBuscaModal } from "@/components/CampoBuscaModal"
 import { Badge } from "@/components/ui/badge"
@@ -378,6 +379,20 @@ export function OrdensServico() {
                   <TableCell className="text-right whitespace-nowrap">
                     <div className="flex justify-end gap-2">
                       <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() =>
+                          window.open(
+                            `/api/ordens-servico/${osObj.id}/pdf`,
+                            "_blank",
+                          )
+                        }
+                        title="Baixar ou visualizar PDF da OS"
+                      >
+                        <FileDown className="size-3.5" />
+                        PDF
+                      </Button>
+                      <Button
                         variant="outline"
                         size="sm"
                         onClick={() => abrirEdicao(osObj)}
@@ -706,6 +721,21 @@ export function OrdensServico() {
             )}
 
             <DialogFooter>
+              {osEmEdicao && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    window.open(
+                      `/api/ordens-servico/${osEmEdicao.id}/pdf`,
+                      "_blank",
+                    )
+                  }
+                >
+                  <FileDown className="size-4" />
+                  PDF da OS
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="outline"

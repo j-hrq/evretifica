@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { FileDown } from "lucide-react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { CampoBuscaModal } from "@/components/CampoBuscaModal"
 import { Badge } from "@/components/ui/badge"
@@ -403,6 +404,20 @@ export function Orcamentos() {
                   <TableCell className="text-right whitespace-nowrap">
                     <div className="flex justify-end gap-2">
                       <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() =>
+                          window.open(
+                            `/api/orcamentos/${orc.id}/pdf`,
+                            "_blank",
+                          )
+                        }
+                        title="Baixar ou visualizar PDF do orçamento"
+                      >
+                        <FileDown className="size-3.5" />
+                        PDF
+                      </Button>
+                      <Button
                         variant="outline"
                         size="sm"
                         onClick={() => abrirEdicao(orc)}
@@ -764,6 +779,21 @@ export function Orcamentos() {
             )}
 
             <DialogFooter>
+              {orcamentoEmEdicao && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    window.open(
+                      `/api/orcamentos/${orcamentoEmEdicao.id}/pdf`,
+                      "_blank",
+                    )
+                  }
+                >
+                  <FileDown className="size-4" />
+                  PDF do orçamento
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="outline"

@@ -9,6 +9,7 @@ from app.models.enums import SituacaoAvaliacao, TipoItem
 
 def test_ordens_servico_exige_sessao(client: TestClient) -> None:
     assert client.get("/api/ordens-servico").status_code == 401
+    assert client.get("/api/ordens-servico/1/pdf").status_code == 401
     assert client.post("/api/ordens-servico", json={}).status_code == 401
 
 
@@ -320,3 +321,36 @@ def test_listar_buscar_filtrar_status_e_paginar_ordens_servico(
     res_busca_placa = auth_client.get("/api/ordens-servico?q=aaa-1111")
     assert res_busca_placa.status_code == 200
     assert res_busca_placa.json()["total"] == 2
+
+
+def test_gerar_pdf_ordem_servico(auth_client: TestClient) -> None:
+    _c1, _c2, _marca, v1_id, item_id = _criar_base(auth_client)
+    res_criar = auth_client.post(
+        "/api/ordens-servico",
+        json={
+            "veiculo_id": v1_id,
+            "status_id": int(SituacaoAvaliacao.EM_ANDAMENTO),
+            "km_entrada": 45000,
+            "descricao": "Troca de correia dentada e revisão completa.",
+            "itens": [
+                {
+                    "item_id": item_id,
+                    "tipo_id": int(TipoItem.AQUISICAO),
+                    "quantidade": 1.0,
+                    "valor_unitario": 350.0,
+                },
+            ],
+        },
+    )
+    assert res_criar.status_code == 201
+    os_id = res_criar.json()["id"]
+
+    # Autenticado deve retornar PDF válido
+    res_pdf = auth_client.get(f"/api/ordens-servico/{os_id}/pdf")
+    assert res_pdf.status_code == 200
+    assert "application/pdf" in res_pdf.headers["content-type"]
+    assert res_pdf.content.startswith(b"%PDF-")
+    assert len(res_pdf.content) > 500
+
+    # OS inexistente deve retornar 404
+    assert auth_client.get("/api/ordens-servico/99999/pdf").status_code == 404

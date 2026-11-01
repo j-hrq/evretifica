@@ -38,6 +38,7 @@ def test_servico_numeracao_sequencia_virada_ano_e_tipos(db_session: Session) -> 
 
 def test_orcamentos_exige_sessao(client: TestClient) -> None:
     assert client.get("/api/orcamentos").status_code == 401
+    assert client.get("/api/orcamentos/1/pdf").status_code == 401
     assert client.post("/api/orcamentos", json={}).status_code == 401
 
 
@@ -327,3 +328,37 @@ def test_listar_buscar_filtrar_status_e_paginar_orcamentos(
     res_busca_placa = auth_client.get("/api/orcamentos?q=aaa-1111")
     assert res_busca_placa.status_code == 200
     assert res_busca_placa.json()["total"] == 2
+
+
+def test_gerar_pdf_orcamento(auth_client: TestClient) -> None:
+    _c1, _c2, _marca, v1_id, item_id = _criar_base(auth_client)
+    res_criar = auth_client.post(
+        "/api/orcamentos",
+        json={
+            "veiculo_id": v1_id,
+            "status_id": int(SituacaoAvaliacao.PENDENTE),
+            "data_emissao": "2026-04-01",
+            "validade_dias": 15,
+            "descricao": "Orçamento para revisão de suspensão dianteira.",
+            "itens": [
+                {
+                    "item_id": item_id,
+                    "tipo_id": int(TipoItem.MAO_DE_OBRA),
+                    "quantidade": 2.0,
+                    "valor_unitario": 210.0,
+                },
+            ],
+        },
+    )
+    assert res_criar.status_code == 201
+    orcamento_id = res_criar.json()["id"]
+
+    # Autenticado deve retornar PDF válido
+    res_pdf = auth_client.get(f"/api/orcamentos/{orcamento_id}/pdf")
+    assert res_pdf.status_code == 200
+    assert "application/pdf" in res_pdf.headers["content-type"]
+    assert res_pdf.content.startswith(b"%PDF-")
+    assert len(res_pdf.content) > 500
+
+    # Orçamento inexistente deve retornar 404
+    assert auth_client.get("/api/orcamentos/99999/pdf").status_code == 404
