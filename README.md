@@ -88,7 +88,13 @@ npm install
 
 ### Rodar o Backend
 
-Em `backend/` (com o ambiente virtual ativo):
+Direto da raiz do repositório (via script npm, que já acessa o `.venv` e inicia o uvicorn com reload):
+
+```bash
+npm run backend
+```
+
+Ou manualmente em `backend/` (com o ambiente virtual ativo):
 
 ```bash
 uvicorn app.main:app --reload --port 8000

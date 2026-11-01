@@ -32,7 +32,7 @@ SPEC.md         produto e regras de negócio
 
 Backend (em `backend/`):
 - Instalar: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements-dev.txt`
-- Dev: `uvicorn app.main:app --reload --port 8000`
+- Dev: `uvicorn app.main:app --reload --port 8000` (ou `npm run backend` na raiz)
 - Testes: `pytest`
 - Lint: `ruff check . && ruff format --check .`
 - Migration: `alembic revision --autogenerate -m "mensagem"` e `alembic upgrade head`
