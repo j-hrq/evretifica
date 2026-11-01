@@ -75,6 +75,32 @@ describe("Autenticação e rotas protegidas", () => {
           json: async () => ({ status: "ok" }),
         } as Response
       }
+      if (url === "/api/configuracao-oficina") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: 1,
+            nome_fantasia: "EVR Retífica",
+            razao_social: "EVR Retífica",
+            cnpj_cpf: "077.125.515-29",
+            inscricao_estadual: null,
+            telefone: "(75) 99118-1598",
+            whatsapp: "(75) 99118-1598",
+            email: "evrretifica@gmail.com",
+            logradouro: "Rua São Salvador",
+            numero: "1996",
+            complemento: null,
+            bairro: "35º BI",
+            cidade: "Feira de Santana",
+            estado: "BA",
+            cep: "44094-060",
+            nome_responsavel: "Evandro Ramos Rosado",
+            data_criacao: "2026-10-31T00:00:00Z",
+            data_alteracao: "2026-10-31T00:00:00Z",
+          }),
+        } as Response
+      }
       if (url === "/api/auth/logout") {
         return {
           ok: true,
@@ -130,6 +156,9 @@ describe("Autenticação e rotas protegidas", () => {
     await waitFor(() => {
       expect(
         screen.getByRole("heading", { name: "Configuração do sistema" }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Dados da Empresa / Oficina" }),
       ).toBeInTheDocument()
       expect(screen.getByText("ok")).toBeInTheDocument()
       expect(

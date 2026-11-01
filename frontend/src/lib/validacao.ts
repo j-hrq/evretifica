@@ -377,3 +377,50 @@ export const ordemServicoFormSchema = z.object({
 })
 
 export type OrdemServicoFormValues = z.infer<typeof ordemServicoFormSchema>
+
+export const configuracaoOficinaFormSchema = z.object({
+  nome_fantasia: z
+    .string()
+    .trim()
+    .min(1, "Nome fantasia é obrigatório.")
+    .max(100, "Nome fantasia não pode exceder 100 caracteres."),
+  razao_social: z.string().max(150),
+  cnpj_cpf: z.string().max(20),
+  inscricao_estadual: z.string().max(30),
+  telefone: z.string().max(20),
+  whatsapp: z.string().max(20),
+  email: z.string().max(100),
+  logradouro: z.string().max(150),
+  numero: z.string().max(20),
+  complemento: z.string().max(100),
+  bairro: z.string().max(100),
+  cidade: z.string().max(100),
+  estado: z.string().max(2),
+  cep: z.string().max(10),
+  nome_responsavel: z.string().max(100),
+})
+
+export type ConfiguracaoOficinaFormValues = z.infer<
+  typeof configuracaoOficinaFormSchema
+>
+
+export interface ConfiguracaoOficinaOutput {
+  id: number
+  nome_fantasia: string
+  razao_social: string | null
+  cnpj_cpf: string | null
+  inscricao_estadual: string | null
+  telefone: string | null
+  whatsapp: string | null
+  email: string | null
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
+  cep: string | null
+  nome_responsavel: string | null
+  data_criacao: string
+  data_alteracao: string
+}

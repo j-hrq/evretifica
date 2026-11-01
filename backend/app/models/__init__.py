@@ -1,4 +1,5 @@
 from app.models.cliente import Cliente
+from app.models.configuracao_oficina import ConfiguracaoOficina
 from app.models.contador_documento import ContadorDocumento
 from app.models.enums import SituacaoAvaliacao, TipoItem, TipoTelefone
 from app.models.item import Item
@@ -11,6 +12,7 @@ from app.models.veiculo import Veiculo
 
 __all__ = [
     "Cliente",
+    "ConfiguracaoOficina",
     "ContadorDocumento",
     "Item",
     "ItemOrcamento",
