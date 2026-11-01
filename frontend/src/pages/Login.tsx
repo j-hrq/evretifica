@@ -55,7 +55,7 @@ export function Login() {
     <main className="flex min-h-screen items-center justify-center p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Entrar — Oficina OS</CardTitle>
+          <CardTitle className="text-xl">Entrar — EVR Retifica</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>

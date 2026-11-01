@@ -199,9 +199,11 @@ describe("Página de Orçamentos", () => {
       expect(screen.getByText("Veículo é obrigatório.")).toBeInTheDocument()
     })
 
-    fireEvent.change(screen.getByLabelText("Veículo"), {
-      target: { value: "7" },
+    fireEvent.click(screen.getByRole("button", { name: "Pesquisar veículo" }))
+    await waitFor(() => {
+      expect(screen.getByText("Selecionar veículo")).toBeInTheDocument()
     })
+    fireEvent.click(screen.getByRole("button", { name: "Selecionar" }))
 
     await waitFor(() => {
       expect(screen.getByText("Roberto Cliente")).toBeInTheDocument()
@@ -226,9 +228,11 @@ describe("Página de Orçamentos", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Adicionar item" }))
 
-    fireEvent.change(screen.getByLabelText("Item"), {
-      target: { value: "4" },
+    fireEvent.click(screen.getByRole("button", { name: "Pesquisar item" }))
+    await waitFor(() => {
+      expect(screen.getByText("Selecionar item")).toBeInTheDocument()
     })
+    fireEvent.click(screen.getByRole("button", { name: "Selecionar" }))
     fireEvent.change(screen.getByLabelText("Qtd."), {
       target: { value: "1.5" },
     })

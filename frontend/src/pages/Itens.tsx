@@ -202,24 +202,26 @@ export function Itens() {
                       {item.ativo ? "Ativo" : "Inativo"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => abrirEdicao(item)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setErroExclusao(null)
-                        setItemParaExcluir(item)
-                      }}
-                    >
-                      Excluir
-                    </Button>
+                  <TableCell className="text-right whitespace-nowrap">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => abrirEdicao(item)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setErroExclusao(null)
+                          setItemParaExcluir(item)
+                        }}
+                      >
+                        Excluir
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

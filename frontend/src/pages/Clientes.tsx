@@ -271,24 +271,26 @@ export function Clientes() {
                       {cliente.ativo ? "Ativo" : "Inativo"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => abrirEdicao(cliente)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setErroExclusao(null)
-                        setClienteParaExcluir(cliente)
-                      }}
-                    >
-                      Excluir
-                    </Button>
+                  <TableCell className="text-right whitespace-nowrap">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => abrirEdicao(cliente)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setErroExclusao(null)
+                          setClienteParaExcluir(cliente)
+                        }}
+                      >
+                        Excluir
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -322,7 +324,7 @@ export function Clientes() {
       )}
 
       <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {clienteEmEdicao ? "Editar cliente" : "Novo cliente"}
@@ -411,63 +413,69 @@ export function Clientes() {
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="grid grid-cols-1 items-start gap-2 rounded-md border p-2 sm:grid-cols-12"
+                  className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3 sm:p-4"
                 >
-                  <div className="flex flex-col gap-1 sm:col-span-2">
-                    <Label htmlFor={`telefones.${index}.ddd`}>DDD</Label>
-                    <Input
-                      id={`telefones.${index}.ddd`}
-                      placeholder="11"
-                      {...register(`telefones.${index}.ddd`)}
-                    />
-                    {errors.telefones?.[index]?.ddd && (
-                      <p className="text-xs text-destructive">
-                        {errors.telefones[index]?.ddd?.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-1 sm:col-span-5">
-                    <Label htmlFor={`telefones.${index}.telefone`}>Número</Label>
-                    <Input
-                      id={`telefones.${index}.telefone`}
-                      placeholder="988887777"
-                      {...register(`telefones.${index}.telefone`)}
-                    />
-                    {errors.telefones?.[index]?.telefone && (
-                      <p className="text-xs text-destructive">
-                        {errors.telefones[index]?.telefone?.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-1 sm:col-span-3">
-                    <Label htmlFor={`telefones.${index}.tipo_id`}>
-                      Tipo de telefone
-                    </Label>
-                    <select
-                      id={`telefones.${index}.tipo_id`}
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                      {...register(`telefones.${index}.tipo_id`, {
-                        valueAsNumber: true,
-                      })}
-                    >
-                      <option value={TipoTelefone.CELULAR}>Celular</option>
-                      <option value={TipoTelefone.FIXO}>Fixo</option>
-                      <option value={TipoTelefone.WHATSAPP}>WhatsApp</option>
-                      <option value={TipoTelefone.COMERCIAL}>Comercial</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-1 sm:col-span-2 sm:pt-5">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Telefone #{index + 1}
+                    </span>
                     <Button
                       type="button"
-                      variant="destructive"
+                      variant="ghost"
                       size="sm"
+                      className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => remove(index)}
                     >
                       Remover
                     </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+                    <div className="flex flex-col gap-1.5 sm:col-span-3">
+                      <Label htmlFor={`telefones.${index}.ddd`}>DDD</Label>
+                      <Input
+                        id={`telefones.${index}.ddd`}
+                        placeholder="11"
+                        {...register(`telefones.${index}.ddd`)}
+                      />
+                      {errors.telefones?.[index]?.ddd && (
+                        <p className="text-xs text-destructive">
+                          {errors.telefones[index]?.ddd?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 sm:col-span-5">
+                      <Label htmlFor={`telefones.${index}.telefone`}>Número</Label>
+                      <Input
+                        id={`telefones.${index}.telefone`}
+                        placeholder="988887777"
+                        {...register(`telefones.${index}.telefone`)}
+                      />
+                      {errors.telefones?.[index]?.telefone && (
+                        <p className="text-xs text-destructive">
+                          {errors.telefones[index]?.telefone?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 sm:col-span-4">
+                      <Label htmlFor={`telefones.${index}.tipo_id`}>
+                        Tipo de telefone
+                      </Label>
+                      <select
+                        id={`telefones.${index}.tipo_id`}
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                        {...register(`telefones.${index}.tipo_id`, {
+                          valueAsNumber: true,
+                        })}
+                      >
+                        <option value={TipoTelefone.CELULAR}>Celular</option>
+                        <option value={TipoTelefone.FIXO}>Fixo</option>
+                        <option value={TipoTelefone.WHATSAPP}>WhatsApp</option>
+                        <option value={TipoTelefone.COMERCIAL}>Comercial</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               ))}

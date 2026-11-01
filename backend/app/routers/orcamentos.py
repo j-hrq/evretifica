@@ -7,6 +7,8 @@ from app.models.enums import SituacaoAvaliacao
 from app.models.usuario import Usuario
 from app.schemas.comum import PaginacaoOutput
 from app.schemas.orcamento import OrcamentoInput, OrcamentoOutput
+from app.services.configuracao_oficina import obter_ou_criar_configuracao_oficina
+from app.services.gerador_pdf import gerar_pdf_orcamento
 from app.services.orcamento import (
     atualizar_orcamento,
     criar_orcamento,
@@ -41,6 +43,22 @@ def obter(
 ) -> OrcamentoOutput:
     orcamento = obter_orcamento(db, orcamento_id)
     return OrcamentoOutput.model_validate(orcamento)
+
+
+@router.get("/{orcamento_id}/pdf")
+def baixar_pdf(
+    orcamento_id: int,
+    db: Session = Depends(get_db),  # noqa: B008
+) -> Response:
+    orcamento = obter_orcamento(db, orcamento_id)
+    oficina = obter_ou_criar_configuracao_oficina(db)
+    pdf_bytes = gerar_pdf_orcamento(orcamento, oficina)
+    nome_arquivo = f"Orcamento-{orcamento.numero}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{nome_arquivo}"'},
+    )
 
 
 @router.post("", response_model=OrcamentoOutput, status_code=status.HTTP_201_CREATED)

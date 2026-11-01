@@ -181,9 +181,11 @@ describe("Página de Ordens de serviço", () => {
       expect(screen.getByText("Veículo é obrigatório.")).toBeInTheDocument()
     })
 
-    fireEvent.change(screen.getByLabelText("Veículo"), {
-      target: { value: "8" },
+    fireEvent.click(screen.getByRole("button", { name: "Pesquisar veículo" }))
+    await waitFor(() => {
+      expect(screen.getByText("Selecionar veículo")).toBeInTheDocument()
     })
+    fireEvent.click(screen.getByRole("button", { name: "Selecionar" }))
 
     await waitFor(() => {
       expect(screen.getByText("Marcos Proprietário")).toBeInTheDocument()
@@ -198,9 +200,11 @@ describe("Página de Ordens de serviço", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Adicionar item" }))
 
-    fireEvent.change(screen.getByLabelText("Item"), {
-      target: { value: "5" },
+    fireEvent.click(screen.getByRole("button", { name: "Pesquisar item" }))
+    await waitFor(() => {
+      expect(screen.getByText("Selecionar item")).toBeInTheDocument()
     })
+    fireEvent.click(screen.getByRole("button", { name: "Selecionar" }))
     fireEvent.change(screen.getByLabelText("Qtd."), {
       target: { value: "2" },
     })

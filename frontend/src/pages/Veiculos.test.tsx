@@ -187,12 +187,18 @@ describe("Página de Veículos", () => {
       ).toBeInTheDocument()
     })
 
-    fireEvent.change(screen.getByLabelText("Cliente"), {
-      target: { value: "10" },
+    fireEvent.click(screen.getByRole("button", { name: "Pesquisar cliente" }))
+    await waitFor(() => {
+      expect(screen.getByText("Selecionar cliente")).toBeInTheDocument()
     })
-    fireEvent.change(screen.getByLabelText("Marca"), {
-      target: { value: "5" },
+    fireEvent.click(screen.getByRole("button", { name: "Selecionar" }))
+
+    fireEvent.click(screen.getByRole("button", { name: "Pesquisar marca" }))
+    await waitFor(() => {
+      expect(screen.getByText("Selecionar marca")).toBeInTheDocument()
     })
+    fireEvent.click(screen.getByRole("button", { name: "Selecionar" }))
+
     fireEvent.change(screen.getByLabelText("Modelo"), {
       target: { value: "Argo" },
     })
