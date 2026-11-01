@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, extrairErro } from "@/lib/api"
 
 export interface Telefone {
   id: number
@@ -53,18 +53,6 @@ export interface ClientePayload {
     cnpj: string | null
     telefones: TelefonePayload[]
   }
-}
-
-async function extrairErro(res: Response, padrao: string): Promise<string> {
-  try {
-    const corpo = (await res.json()) as { detail?: string }
-    if (typeof corpo.detail === "string") {
-      return corpo.detail
-    }
-  } catch {
-    // mantém mensagem padrão
-  }
-  return padrao
 }
 
 export function useClientes(params: {

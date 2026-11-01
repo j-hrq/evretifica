@@ -92,7 +92,7 @@ export function Veiculos() {
   const [erroFormulario, setErroFormulario] = useState<string | null>(null)
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
 
-  const { data, isLoading, isError, error } = useVeiculos({
+  const { data, isLoading, isError, error, refetch } = useVeiculos({
     q: busca,
     page,
     per_page: 10,
@@ -214,7 +214,7 @@ export function Veiculos() {
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Veículos</h1>
         <Button onClick={abrirNovo}>Novo veículo</Button>
@@ -237,9 +237,16 @@ export function Veiculos() {
       )}
 
       {isError && (
-        <p role="alert" className="text-destructive">
-          {error instanceof Error ? error.message : "Erro ao carregar veículos."}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="alert" className="text-destructive">
+            {error instanceof Error
+              ? error.message
+              : "Erro ao carregar veículos."}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            Tentar novamente
+          </Button>
+        </div>
       )}
 
       {!isLoading && !isError && data && data.items.length === 0 && (
@@ -360,7 +367,7 @@ export function Veiculos() {
               <Label htmlFor="cliente_id">Cliente</Label>
               <select
                 id="cliente_id"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 {...register("cliente_id", { valueAsNumber: true })}
               >
                 <option value={0}>Selecione um cliente...</option>
@@ -378,12 +385,12 @@ export function Veiculos() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="marca_id">Marca</Label>
                 <select
                   id="marca_id"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                   {...register("marca_id", { valueAsNumber: true })}
                 >
                   <option value={0}>Selecione uma marca...</option>
@@ -411,7 +418,7 @@ export function Veiculos() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="placa">Placa</Label>
                 <Input
@@ -455,7 +462,7 @@ export function Veiculos() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="cor">Cor</Label>
                 <Input id="cor" {...register("cor")} />
@@ -542,6 +549,6 @@ export function Veiculos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   )
 }

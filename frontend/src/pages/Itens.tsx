@@ -45,6 +45,7 @@ function valoresIniciais(item: Item | null): ItemFormValues {
 
 export function Itens() {
   const [busca, setBusca] = useState<string>("")
+  const [filtroAtivo, setFiltroAtivo] = useState<string>("")
   const [page, setPage] = useState<number>(1)
   const [modalAberto, setModalAberto] = useState<boolean>(false)
   const [itemEmEdicao, setItemEmEdicao] = useState<Item | null>(null)
@@ -52,8 +53,12 @@ export function Itens() {
   const [erroFormulario, setErroFormulario] = useState<string | null>(null)
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
 
-  const { data, isLoading, isError, error } = useItens({
+  const ativoParam =
+    filtroAtivo === "true" ? true : filtroAtivo === "false" ? false : undefined
+
+  const { data, isLoading, isError, error, refetch } = useItens({
     q: busca,
+    ativo: ativoParam,
     page,
     per_page: 10,
   })
@@ -126,30 +131,52 @@ export function Itens() {
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Itens</h1>
         <Button onClick={abrirNovo}>Novo item</Button>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Input
-          placeholder="Buscar por nome..."
-          aria-label="Buscar itens"
-          value={busca}
-          onChange={(e) => {
-            setBusca(e.target.value)
-            setPage(1)
-          }}
-        />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="sm:col-span-2">
+          <Input
+            placeholder="Buscar por nome..."
+            aria-label="Buscar itens"
+            value={busca}
+            onChange={(e) => {
+              setBusca(e.target.value)
+              setPage(1)
+            }}
+          />
+        </div>
+        <div>
+          <select
+            aria-label="Filtrar por status"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            value={filtroAtivo}
+            onChange={(e) => {
+              setFiltroAtivo(e.target.value)
+              setPage(1)
+            }}
+          >
+            <option value="">Todos os status</option>
+            <option value="true">Ativos</option>
+            <option value="false">Inativos</option>
+          </select>
+        </div>
       </div>
 
       {isLoading && <p className="text-muted-foreground">Carregando itens...</p>}
 
       {isError && (
-        <p role="alert" className="text-destructive">
-          {error instanceof Error ? error.message : "Erro ao carregar itens."}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="alert" className="text-destructive">
+            {error instanceof Error ? error.message : "Erro ao carregar itens."}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            Tentar novamente
+          </Button>
+        </div>
       )}
 
       {!isLoading && !isError && data && data.items.length === 0 && (
@@ -253,7 +280,7 @@ export function Itens() {
               <input
                 id="ativo"
                 type="checkbox"
-                className="h-4 w-4 rounded border-input"
+                className="h-4 w-4 rounded border-input outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                 {...register("ativo")}
               />
               <Label htmlFor="ativo">Ativo</Label>
@@ -321,6 +348,6 @@ export function Itens() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   )
 }

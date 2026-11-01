@@ -126,6 +126,6 @@ def exigir_sessao_exceto_publicas(
     request: Request,
     db: Session = Depends(get_db),  # noqa: B008
 ) -> None:
-    if request.url.path in ROTAS_PUBLICAS:
+    if request.url.path in ROTAS_PUBLICAS or not request.url.path.startswith("/api"):
         return
     obter_usuario_atual(request, db)

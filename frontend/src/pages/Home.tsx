@@ -35,11 +35,27 @@ export function Home() {
     <main className="flex min-h-[calc(100vh-57px)] flex-col items-center justify-center gap-4 p-6">
       <h1 className="text-2xl font-bold">Oficina OS</h1>
       <p className="text-muted-foreground">
-        Status da API: <span className="font-semibold text-foreground">{status}</span>
+        Status da API:{" "}
+        <span className="font-semibold text-foreground">{status}</span>
       </p>
       <div className="flex flex-wrap justify-center gap-2">
         <Button asChild variant="secondary">
           <Link to="/clientes">Gerenciar clientes</Link>
+        </Button>
+        <Button asChild variant="secondary">
+          <Link to="/marcas-veiculo">Marcas de veículo</Link>
+        </Button>
+        <Button asChild variant="secondary">
+          <Link to="/veiculos">Veículos</Link>
+        </Button>
+        <Button asChild variant="secondary">
+          <Link to="/itens">Itens</Link>
+        </Button>
+        <Button asChild variant="secondary">
+          <Link to="/orcamentos">Orçamentos</Link>
+        </Button>
+        <Button asChild variant="secondary">
+          <Link to="/ordens-servico">Ordens de serviço</Link>
         </Button>
         <Button onClick={() => void verificarSaude()} disabled={carregando}>
           Verificar novamente

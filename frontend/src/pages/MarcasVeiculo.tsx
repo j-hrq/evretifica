@@ -48,6 +48,7 @@ function valoresIniciais(marca: MarcaVeiculo | null): MarcaVeiculoFormValues {
 
 export function MarcasVeiculo() {
   const [busca, setBusca] = useState<string>("")
+  const [filtroAtivo, setFiltroAtivo] = useState<string>("")
   const [page, setPage] = useState<number>(1)
   const [modalAberto, setModalAberto] = useState<boolean>(false)
   const [marcaEmEdicao, setMarcaEmEdicao] = useState<MarcaVeiculo | null>(null)
@@ -57,8 +58,12 @@ export function MarcasVeiculo() {
   const [erroFormulario, setErroFormulario] = useState<string | null>(null)
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
 
-  const { data, isLoading, isError, error } = useMarcasVeiculo({
+  const ativoParam =
+    filtroAtivo === "true" ? true : filtroAtivo === "false" ? false : undefined
+
+  const { data, isLoading, isError, error, refetch } = useMarcasVeiculo({
     q: busca,
+    ativo: ativoParam,
     page,
     per_page: 10,
   })
@@ -133,22 +138,39 @@ export function MarcasVeiculo() {
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Marcas de veículo</h1>
         <Button onClick={abrirNova}>Nova marca</Button>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Input
-          placeholder="Buscar por nome..."
-          aria-label="Buscar marcas de veículo"
-          value={busca}
-          onChange={(e) => {
-            setBusca(e.target.value)
-            setPage(1)
-          }}
-        />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="sm:col-span-2">
+          <Input
+            placeholder="Buscar por nome..."
+            aria-label="Buscar marcas de veículo"
+            value={busca}
+            onChange={(e) => {
+              setBusca(e.target.value)
+              setPage(1)
+            }}
+          />
+        </div>
+        <div>
+          <select
+            aria-label="Filtrar por status"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            value={filtroAtivo}
+            onChange={(e) => {
+              setFiltroAtivo(e.target.value)
+              setPage(1)
+            }}
+          >
+            <option value="">Todos os status</option>
+            <option value="true">Ativos</option>
+            <option value="false">Inativos</option>
+          </select>
+        </div>
       </div>
 
       {isLoading && (
@@ -156,11 +178,16 @@ export function MarcasVeiculo() {
       )}
 
       {isError && (
-        <p role="alert" className="text-destructive">
-          {error instanceof Error
-            ? error.message
-            : "Erro ao carregar marcas de veículo."}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="alert" className="text-destructive">
+            {error instanceof Error
+              ? error.message
+              : "Erro ao carregar marcas de veículo."}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            Tentar novamente
+          </Button>
+        </div>
       )}
 
       {!isLoading && !isError && data && data.items.length === 0 && (
@@ -266,7 +293,7 @@ export function MarcasVeiculo() {
               <input
                 id="ativo"
                 type="checkbox"
-                className="h-4 w-4 rounded border-input"
+                className="h-4 w-4 rounded border-input outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                 {...register("ativo")}
               />
               <Label htmlFor="ativo">Ativo</Label>
@@ -334,6 +361,6 @@ export function MarcasVeiculo() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   )
 }

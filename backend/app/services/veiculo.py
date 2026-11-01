@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session, joinedload
 from app.exceptions import ConflitoError, NaoEncontradoError
 from app.models.cliente import Cliente
 from app.models.marca_veiculo import MarcaVeiculo
+from app.models.orcamento import Orcamento
+from app.models.ordem_servico import OrdemServico
 from app.models.pessoa import Pessoa, PessoaFisica, PessoaJuridica
 from app.models.veiculo import Veiculo
 from app.schemas.comum import PaginacaoOutput
@@ -166,12 +168,16 @@ def atualizar_veiculo(db: Session, veiculo_id: int, dados: VeiculoInput) -> Veic
 
 
 def possui_vinculos_veiculo(db: Session, veiculo_id: int) -> bool:
-    """Verifica vínculos do veículo com orçamentos ou OS.
-
-    Preparado para ser estendido nas fatias 8 (Orçamentos) e 9 (OS).
-    """
-    _ = (db, veiculo_id)
-    return False
+    """Verifica vínculos do veículo com orçamentos ou OS."""
+    tem_orcamento = db.scalar(
+        select(Orcamento.id).where(Orcamento.veiculo_id == veiculo_id).limit(1)
+    )
+    if tem_orcamento is not None:
+        return True
+    tem_os = db.scalar(
+        select(OrdemServico.id).where(OrdemServico.veiculo_id == veiculo_id).limit(1)
+    )
+    return tem_os is not None
 
 
 def excluir_veiculo(db: Session, veiculo_id: int) -> None:

@@ -1,6 +1,13 @@
 import { useState, type ReactNode } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router-dom"
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  NavLink,
+  Route,
+  Routes,
+} from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { AuthProvider, useAuth } from "@/hooks/useAuth"
 import { Clientes } from "@/pages/Clientes"
@@ -8,43 +15,46 @@ import { Home } from "@/pages/Home"
 import { Itens } from "@/pages/Itens"
 import { Login } from "@/pages/Login"
 import { MarcasVeiculo } from "@/pages/MarcasVeiculo"
+import { Orcamentos } from "@/pages/Orcamentos"
+import { OrdensServico } from "@/pages/OrdensServico"
 import { Veiculos } from "@/pages/Veiculos"
+
+const LINKS_MENU = [
+  { to: "/clientes", label: "Clientes" },
+  { to: "/marcas-veiculo", label: "Marcas" },
+  { to: "/veiculos", label: "Veículos" },
+  { to: "/itens", label: "Itens" },
+  { to: "/orcamentos", label: "Orçamentos" },
+  { to: "/ordens-servico", label: "OS" },
+]
 
 function LayoutAutenticado({ children }: { children: ReactNode }) {
   const { usuario, sair } = useAuth()
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-6 py-3">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <nav className="flex items-center gap-4">
+      <header className="border-b px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
+          <nav
+            aria-label="Navegação principal"
+            className="flex flex-wrap items-center gap-4"
+          >
             <Link to="/" className="font-bold">
               Oficina OS
             </Link>
-            <Link
-              to="/clientes"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Clientes
-            </Link>
-            <Link
-              to="/marcas-veiculo"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Marcas
-            </Link>
-            <Link
-              to="/veiculos"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Veículos
-            </Link>
-            <Link
-              to="/itens"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Itens
-            </Link>
+            {LINKS_MENU.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  isActive
+                    ? "text-sm font-semibold text-foreground underline underline-offset-4"
+                    : "text-sm text-muted-foreground hover:text-foreground"
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
           </nav>
           <div className="flex items-center gap-3">
             {usuario && (
@@ -135,6 +145,22 @@ export function AppRoutes() {
             element={
               <RotaProtegida>
                 <Itens />
+              </RotaProtegida>
+            }
+          />
+          <Route
+            path="/orcamentos"
+            element={
+              <RotaProtegida>
+                <Orcamentos />
+              </RotaProtegida>
+            }
+          />
+          <Route
+            path="/ordens-servico"
+            element={
+              <RotaProtegida>
+                <OrdensServico />
               </RotaProtegida>
             }
           />

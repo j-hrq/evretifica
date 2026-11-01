@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.exceptions import ConflitoError, NaoEncontradoError
 from app.models.cliente import Cliente
+from app.models.orcamento import Orcamento
+from app.models.ordem_servico import OrdemServico
 from app.models.pessoa import Pessoa, PessoaFisica, PessoaJuridica
 from app.models.veiculo import Veiculo
 from app.schemas.cliente import ClienteInput, ClienteOutput
@@ -124,12 +126,19 @@ def atualizar_cliente(db: Session, cliente_id: int, dados: ClienteInput) -> Clie
 
 
 def possui_vinculos_cliente(db: Session, cliente_id: int) -> bool:
-    """Verifica vínculos do cliente com veículos, orçamentos ou OS.
-
-    Preparado para ser estendido nas fatias 8 (Orçamentos) e 9 (OS).
-    """
+    """Verifica vínculos do cliente com veículos, orçamentos ou OS."""
     tem_veiculo = db.scalar(select(Veiculo.id).where(Veiculo.cliente_id == cliente_id).limit(1))
-    return tem_veiculo is not None
+    if tem_veiculo is not None:
+        return True
+    tem_orcamento = db.scalar(
+        select(Orcamento.id).where(Orcamento.cliente_id == cliente_id).limit(1)
+    )
+    if tem_orcamento is not None:
+        return True
+    tem_os = db.scalar(
+        select(OrdemServico.id).where(OrdemServico.cliente_id == cliente_id).limit(1)
+    )
+    return tem_os is not None
 
 
 def excluir_cliente(db: Session, cliente_id: int) -> None:
