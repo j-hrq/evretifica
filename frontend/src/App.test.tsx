@@ -28,7 +28,7 @@ describe("Autenticação e rotas protegidas", () => {
     })
   })
 
-  it("realiza login, acessa a tela inicial e faz logout", async () => {
+  it("realiza login, acessa o painel inicial, abre configuração do sistema e faz logout", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
       const url = typeof input === "string" ? input : input.toString()
       if (url === "/api/auth/me") {
@@ -47,6 +47,24 @@ describe("Autenticação e rotas protegidas", () => {
             login: "admin",
             pessoa_id: 1,
             nome: "Oficina Admin",
+          }),
+        } as Response
+      }
+      if (
+        url.startsWith("/api/ordens-servico") ||
+        url.startsWith("/api/orcamentos") ||
+        url.startsWith("/api/clientes") ||
+        url.startsWith("/api/veiculos")
+      ) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            items: [],
+            total: 0,
+            page: 1,
+            per_page: 5,
+            total_pages: 1,
           }),
         } as Response
       }
@@ -87,11 +105,48 @@ describe("Autenticação e rotas protegidas", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Oficina OS" }),
+        screen.getByRole("heading", { name: "EVR Retifica" }),
       ).toBeInTheDocument()
       expect(screen.getByText("Oficina Admin")).toBeInTheDocument()
-      expect(screen.getByText("ok")).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Últimas Ordens de Serviço" }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("heading", { name: "Últimos Orçamentos" }),
+      ).toBeInTheDocument()
     })
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Abrir menu" }),
+    )
+
+    const menuMovel = screen.getByRole("navigation", { name: "Menu móvel" })
+    expect(menuMovel).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole("link", { name: "Configuração do sistema" }),
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Configuração do sistema" }),
+      ).toBeInTheDocument()
+      expect(screen.getByText("ok")).toBeInTheDocument()
+      expect(
+        screen.queryByRole("navigation", { name: "Menu móvel" }),
+      ).not.toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("radio", { name: /Escuro/i }))
+    expect(document.documentElement.classList.contains("dark")).toBe(true)
+    expect(localStorage.getItem("evr-retifica-tema")).toBe("escuro")
+
+    fireEvent.click(screen.getByRole("radio", { name: /Claro/i }))
+    expect(document.documentElement.classList.contains("dark")).toBe(false)
+    expect(localStorage.getItem("evr-retifica-tema")).toBe("claro")
+
+    fireEvent.click(screen.getByRole("radio", { name: /Sistema/i }))
+    expect(localStorage.getItem("evr-retifica-tema")).toBe("sistema")
 
     fireEvent.click(screen.getByRole("button", { name: "Sair" }))
 

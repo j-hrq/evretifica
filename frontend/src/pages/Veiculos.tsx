@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { CampoBuscaModal } from "@/components/CampoBuscaModal"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -89,6 +90,11 @@ export function Veiculos() {
     null,
   )
   const [buscaClienteModal, setBuscaClienteModal] = useState<string>("")
+  const [buscaMarcaModal, setBuscaMarcaModal] = useState<string>("")
+  const [clienteSelecionadoCache, setClienteSelecionadoCache] =
+    useState<Cliente | null>(null)
+  const [marcaSelecionadaCache, setMarcaSelecionadaCache] =
+    useState<MarcaVeiculo | null>(null)
   const [erroFormulario, setErroFormulario] = useState<string | null>(null)
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
 
@@ -97,17 +103,20 @@ export function Veiculos() {
     page,
     per_page: 10,
   })
-  const { data: clientesAtivosData } = useClientes({
-    q: buscaClienteModal,
-    ativo: true,
-    page: 1,
-    per_page: 50,
-  })
-  const { data: marcasAtivasData } = useMarcasVeiculo({
-    ativo: true,
-    page: 1,
-    per_page: 100,
-  })
+  const { data: clientesAtivosData, isLoading: carregandoClientes } =
+    useClientes({
+      q: buscaClienteModal,
+      ativo: true,
+      page: 1,
+      per_page: 50,
+    })
+  const { data: marcasAtivasData, isLoading: carregandoMarcas } =
+    useMarcasVeiculo({
+      q: buscaMarcaModal,
+      ativo: true,
+      page: 1,
+      per_page: 100,
+    })
 
   const criarMutation = useCriarVeiculo()
   const atualizarMutation = useAtualizarVeiculo()
@@ -139,16 +148,60 @@ export function Veiculos() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<VeiculoFormValues>({
     resolver: zodResolver(veiculoFormSchema),
     defaultValues: valoresIniciais(null),
   })
 
+  const clienteIdSelecionado = Number(watch("cliente_id") || 0)
+  const marcaIdSelecionada = Number(watch("marca_id") || 0)
+
+  const clienteSelecionado = useMemo<Cliente | null>(() => {
+    if (!clienteIdSelecionado) return null
+    return (
+      opcoesClientes.find((c) => c.id === clienteIdSelecionado) ??
+      (clienteSelecionadoCache?.id === clienteIdSelecionado
+        ? clienteSelecionadoCache
+        : null) ??
+      (veiculoEmEdicao?.cliente.id === clienteIdSelecionado
+        ? veiculoEmEdicao.cliente
+        : null)
+    )
+  }, [
+    clienteIdSelecionado,
+    opcoesClientes,
+    clienteSelecionadoCache,
+    veiculoEmEdicao,
+  ])
+
+  const marcaSelecionada = useMemo<MarcaVeiculo | null>(() => {
+    if (!marcaIdSelecionada) return null
+    return (
+      opcoesMarcas.find((m) => m.id === marcaIdSelecionada) ??
+      (marcaSelecionadaCache?.id === marcaIdSelecionada
+        ? marcaSelecionadaCache
+        : null) ??
+      (veiculoEmEdicao?.marca.id === marcaIdSelecionada
+        ? veiculoEmEdicao.marca
+        : null)
+    )
+  }, [
+    marcaIdSelecionada,
+    opcoesMarcas,
+    marcaSelecionadaCache,
+    veiculoEmEdicao,
+  ])
+
   useEffect(() => {
     if (modalAberto) {
       reset(valoresIniciais(veiculoEmEdicao))
       setBuscaClienteModal("")
+      setBuscaMarcaModal("")
+      setClienteSelecionadoCache(veiculoEmEdicao?.cliente ?? null)
+      setMarcaSelecionadaCache(veiculoEmEdicao?.marca ?? null)
       setErroFormulario(null)
     }
   }, [modalAberto, veiculoEmEdicao, reset])
@@ -287,24 +340,26 @@ export function Veiculos() {
                       ? veiculo.km.toLocaleString("pt-BR")
                       : "-"}
                   </TableCell>
-                  <TableCell className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => abrirEdicao(veiculo)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setErroExclusao(null)
-                        setVeiculoParaExcluir(veiculo)
-                      }}
-                    >
-                      Excluir
-                    </Button>
+                  <TableCell className="text-right whitespace-nowrap">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => abrirEdicao(veiculo)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setErroExclusao(null)
+                          setVeiculoParaExcluir(veiculo)
+                        }}
+                      >
+                        Excluir
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -338,7 +393,7 @@ export function Veiculos() {
       )}
 
       <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {veiculoEmEdicao ? "Editar veículo" : "Novo veículo"}
@@ -354,30 +409,37 @@ export function Veiculos() {
             noValidate
           >
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="busca_cliente">Buscar cliente</Label>
-              <Input
-                id="busca_cliente"
-                placeholder="Filtrar cliente por nome ou CPF/CNPJ..."
-                value={buscaClienteModal}
-                onChange={(e) => setBuscaClienteModal(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
               <Label htmlFor="cliente_id">Cliente</Label>
-              <select
+              <CampoBuscaModal
                 id="cliente_id"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                {...register("cliente_id", { valueAsNumber: true })}
-              >
-                <option value={0}>Selecione um cliente...</option>
-                {opcoesClientes.map((cliente) => (
-                  <option key={cliente.id} value={cliente.id}>
-                    {cliente.pessoa.nome} (
-                    {cliente.pessoa.cpf ?? cliente.pessoa.cnpj})
-                  </option>
-                ))}
-              </select>
+                valorId={clienteIdSelecionado}
+                textoSelecionado={
+                  clienteSelecionado
+                    ? `${clienteSelecionado.pessoa.nome} (${clienteSelecionado.pessoa.cpf ?? clienteSelecionado.pessoa.cnpj})`
+                    : ""
+                }
+                placeholder="Clique na lupa para selecionar um cliente..."
+                rotuloBotaoLupa="Pesquisar cliente"
+                tituloModal="Selecionar cliente"
+                descricaoModal="Busque e selecione o cliente proprietário do veículo."
+                placeholderBusca="Buscar cliente por nome, CPF, CNPJ ou e-mail..."
+                busca={buscaClienteModal}
+                onBuscaChange={setBuscaClienteModal}
+                carregando={carregandoClientes}
+                mensagemVazio="Nenhum cliente encontrado."
+                opcoes={opcoesClientes.map((cliente) => ({
+                  id: cliente.id,
+                  titulo: cliente.pessoa.nome,
+                  subtitulo: `CPF/CNPJ: ${cliente.pessoa.cpf ?? cliente.pessoa.cnpj}`,
+                  detalhe: cliente.pessoa.email,
+                }))}
+                onSelecionar={(idEscolhido) => {
+                  const achado =
+                    opcoesClientes.find((c) => c.id === idEscolhido) ?? null
+                  if (achado) setClienteSelecionadoCache(achado)
+                  setValue("cliente_id", idEscolhido, { shouldValidate: true })
+                }}
+              />
               {errors.cliente_id && (
                 <p className="text-sm text-destructive">
                   {errors.cliente_id.message}
@@ -388,18 +450,30 @@ export function Veiculos() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="marca_id">Marca</Label>
-                <select
+                <CampoBuscaModal
                   id="marca_id"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                  {...register("marca_id", { valueAsNumber: true })}
-                >
-                  <option value={0}>Selecione uma marca...</option>
-                  {opcoesMarcas.map((marca) => (
-                    <option key={marca.id} value={marca.id}>
-                      {marca.nome}
-                    </option>
-                  ))}
-                </select>
+                  valorId={marcaIdSelecionada}
+                  textoSelecionado={marcaSelecionada?.nome ?? ""}
+                  placeholder="Clique na lupa para selecionar..."
+                  rotuloBotaoLupa="Pesquisar marca"
+                  tituloModal="Selecionar marca"
+                  descricaoModal="Busque e selecione a marca do veículo."
+                  placeholderBusca="Buscar marca por nome..."
+                  busca={buscaMarcaModal}
+                  onBuscaChange={setBuscaMarcaModal}
+                  carregando={carregandoMarcas}
+                  mensagemVazio="Nenhuma marca encontrada."
+                  opcoes={opcoesMarcas.map((marca) => ({
+                    id: marca.id,
+                    titulo: marca.nome,
+                  }))}
+                  onSelecionar={(idEscolhido) => {
+                    const achada =
+                      opcoesMarcas.find((m) => m.id === idEscolhido) ?? null
+                    if (achada) setMarcaSelecionadaCache(achada)
+                    setValue("marca_id", idEscolhido, { shouldValidate: true })
+                  }}
+                />
                 {errors.marca_id && (
                   <p className="text-sm text-destructive">
                     {errors.marca_id.message}
@@ -516,11 +590,9 @@ export function Veiculos() {
           <DialogHeader>
             <DialogTitle>Confirmar exclusão</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir o veículo{" "}
-              <strong>
-                {veiculoParaExcluir?.modelo} ({veiculoParaExcluir?.placa})
-              </strong>
-              ?
+              Deseja realmente excluir o veículo{" "}
+              <strong>{veiculoParaExcluir?.placa}</strong> (
+              {veiculoParaExcluir?.modelo})?
             </DialogDescription>
           </DialogHeader>
 
@@ -544,7 +616,9 @@ export function Veiculos() {
               disabled={excluirMutation.isPending}
               onClick={() => void confirmarExclusao()}
             >
-              Confirmar exclusão
+              {excluirMutation.isPending
+                ? "Excluindo..."
+                : "Confirmar exclusão"}
             </Button>
           </DialogFooter>
         </DialogContent>

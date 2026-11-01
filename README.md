@@ -1,4 +1,4 @@
-# Oficina OS
+# EVR Retifica
 
 Aplicação web para uma oficina mecânica registrar clientes, marcas de veículos, veículos, catálogo de itens (peças e serviços), orçamentos e ordens de serviço.
 
@@ -42,7 +42,7 @@ Variáveis utilizadas:
 
 ```bash
 cd backend
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
 ```
@@ -67,7 +67,13 @@ Popule a tabela de marcas de veículos com a lista inicial:
 python -m app.seed_marcas
 ```
 
-> Ambos os scripts de seed são idempotentes e podem ser executados novamente com segurança.
+(Opcional) Popule o banco com uma massa de teste de 100 registros para cada entidade (clientes, marcas, veículos, itens, orçamentos e ordens de serviço):
+
+```bash
+python -m app.seed_massa_dados
+```
+
+> Todos os scripts de seed são idempotentes e podem ser executados novamente com segurança.
 
 ### 3. Frontend
 

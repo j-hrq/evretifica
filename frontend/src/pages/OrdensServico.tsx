@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
+import { CampoBuscaModal } from "@/components/CampoBuscaModal"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -77,6 +78,12 @@ export function OrdensServico() {
   const [osEmEdicao, setOsEmEdicao] = useState<OrdemServico | null>(null)
   const [osParaExcluir, setOsParaExcluir] = useState<OrdemServico | null>(null)
   const [buscaVeiculoModal, setBuscaVeiculoModal] = useState<string>("")
+  const [buscaItemModal, setBuscaItemModal] = useState<string>("")
+  const [veiculoSelecionadoCache, setVeiculoSelecionadoCache] =
+    useState<Veiculo | null>(null)
+  const [itensSelecionadosCache, setItensSelecionadosCache] = useState<
+    Record<number, Item>
+  >({})
   const [erroFormulario, setErroFormulario] = useState<string | null>(null)
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
 
@@ -88,12 +95,13 @@ export function OrdensServico() {
     page,
     per_page: 10,
   })
-  const { data: veiculosData } = useVeiculos({
+  const { data: veiculosData, isLoading: carregandoVeiculos } = useVeiculos({
     q: buscaVeiculoModal,
     page: 1,
     per_page: 50,
   })
-  const { data: itensAtivosData } = useItens({
+  const { data: itensAtivosData, isLoading: carregandoItens } = useItens({
+    q: buscaItemModal,
     ativo: true,
     page: 1,
     per_page: 100,
@@ -132,6 +140,7 @@ export function OrdensServico() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<OrdemServicoFormValues>({
     resolver: zodResolver(ordemServicoFormSchema),
@@ -143,8 +152,26 @@ export function OrdensServico() {
     name: "itens",
   })
 
-  const veiculoIdSelecionado = watch("veiculo_id")
+  const veiculoIdSelecionado = Number(watch("veiculo_id") || 0)
   const itensWatch = watch("itens")
+
+  const veiculoSelecionado = useMemo<Veiculo | null>(() => {
+    if (!veiculoIdSelecionado) return null
+    return (
+      opcoesVeiculos.find((v) => v.id === veiculoIdSelecionado) ??
+      (veiculoSelecionadoCache?.id === veiculoIdSelecionado
+        ? veiculoSelecionadoCache
+        : null) ??
+      (osEmEdicao?.veiculo.id === veiculoIdSelecionado
+        ? osEmEdicao.veiculo
+        : null)
+    )
+  }, [
+    veiculoIdSelecionado,
+    opcoesVeiculos,
+    veiculoSelecionadoCache,
+    osEmEdicao,
+  ])
 
   const totalCalculadoCentavos = (itensWatch ?? []).reduce(
     (acc, linha) =>
@@ -158,22 +185,35 @@ export function OrdensServico() {
 
   const nomeClienteExibido = useMemo<string>(() => {
     if (!veiculoIdSelecionado) return "-"
-    if (osEmEdicao && Number(veiculoIdSelecionado) === osEmEdicao.veiculo_id) {
+    if (osEmEdicao && veiculoIdSelecionado === osEmEdicao.veiculo_id) {
       return osEmEdicao.cliente.pessoa.nome
     }
-    const veiculo = opcoesVeiculos.find(
-      (v) => v.id === Number(veiculoIdSelecionado),
-    )
-    return veiculo?.cliente.pessoa.nome ?? "-"
-  }, [veiculoIdSelecionado, osEmEdicao, opcoesVeiculos])
+    return veiculoSelecionado?.cliente.pessoa.nome ?? "-"
+  }, [veiculoIdSelecionado, osEmEdicao, veiculoSelecionado])
 
   useEffect(() => {
     if (modalAberto) {
       reset(valoresIniciais(osEmEdicao))
       setBuscaVeiculoModal("")
+      setBuscaItemModal("")
+      setVeiculoSelecionadoCache(osEmEdicao?.veiculo ?? null)
+      const cacheInicialItens: Record<number, Item> = {}
+      if (osEmEdicao) {
+        for (const linha of osEmEdicao.itens) {
+          cacheInicialItens[linha.item.id] = linha.item
+        }
+      }
+      setItensSelecionadosCache(cacheInicialItens)
       setErroFormulario(null)
     }
   }, [modalAberto, osEmEdicao, reset])
+
+  function obterNomeItem(itemId: number): string {
+    if (!itemId) return ""
+    const item =
+      opcoesItens.find((i) => i.id === itemId) ?? itensSelecionadosCache[itemId]
+    return item?.nome ?? ""
+  }
 
   function abrirNova() {
     setOsEmEdicao(null)
@@ -335,24 +375,26 @@ export function OrdensServico() {
                   <TableCell className="font-medium">
                     {formatarMoedaCentavos(osObj.total)}
                   </TableCell>
-                  <TableCell className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => abrirEdicao(osObj)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setErroExclusao(null)
-                        setOsParaExcluir(osObj)
-                      }}
-                    >
-                      Excluir
-                    </Button>
+                  <TableCell className="text-right whitespace-nowrap">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => abrirEdicao(osObj)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setErroExclusao(null)
+                          setOsParaExcluir(osObj)
+                        }}
+                      >
+                        Excluir
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -386,7 +428,7 @@ export function OrdensServico() {
       )}
 
       <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl lg:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {osEmEdicao
@@ -405,32 +447,40 @@ export function OrdensServico() {
             className="flex flex-col gap-4"
             noValidate
           >
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="busca_veiculo_os">Buscar veículo</Label>
-              <Input
-                id="busca_veiculo_os"
-                placeholder="Filtrar veículo por placa, modelo ou cliente..."
-                value={buscaVeiculoModal}
-                onChange={(e) => setBuscaVeiculoModal(e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
                 <Label htmlFor="veiculo_id">Veículo</Label>
-                <select
+                <CampoBuscaModal
                   id="veiculo_id"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                  {...register("veiculo_id", { valueAsNumber: true })}
-                >
-                  <option value={0}>Selecione um veículo...</option>
-                  {opcoesVeiculos.map((veiculo) => (
-                    <option key={veiculo.id} value={veiculo.id}>
-                      {veiculo.placa} - {veiculo.modelo} (
-                      {veiculo.cliente.pessoa.nome})
-                    </option>
-                  ))}
-                </select>
+                  valorId={veiculoIdSelecionado}
+                  textoSelecionado={
+                    veiculoSelecionado
+                      ? `${veiculoSelecionado.placa} - ${veiculoSelecionado.modelo} (${veiculoSelecionado.cliente.pessoa.nome})`
+                      : ""
+                  }
+                  placeholder="Clique na lupa para selecionar um veículo..."
+                  rotuloBotaoLupa="Pesquisar veículo"
+                  tituloModal="Selecionar veículo"
+                  descricaoModal="Busque por placa, modelo ou cliente e selecione o veículo da OS."
+                  placeholderBusca="Buscar veículo por placa, modelo ou cliente..."
+                  busca={buscaVeiculoModal}
+                  onBuscaChange={setBuscaVeiculoModal}
+                  carregando={carregandoVeiculos}
+                  mensagemVazio="Nenhum veículo encontrado."
+                  opcoes={opcoesVeiculos.map((veiculo) => ({
+                    id: veiculo.id,
+                    titulo: `${veiculo.placa} — ${veiculo.marca.nome} ${veiculo.modelo}`,
+                    subtitulo: `Cliente: ${veiculo.cliente.pessoa.nome}`,
+                  }))}
+                  onSelecionar={(idEscolhido) => {
+                    const achado =
+                      opcoesVeiculos.find((v) => v.id === idEscolhido) ?? null
+                    if (achado) setVeiculoSelecionadoCache(achado)
+                    setValue("veiculo_id", idEscolhido, {
+                      shouldValidate: true,
+                    })
+                  }}
+                />
                 {errors.veiculo_id && (
                   <p className="text-sm text-destructive">
                     {errors.veiculo_id.message}
@@ -444,9 +494,10 @@ export function OrdensServico() {
                 </span>
                 <div
                   aria-labelledby="rotulo_cliente_os"
+                  title={nomeClienteExibido}
                   className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm"
                 >
-                  {nomeClienteExibido}
+                  <span className="truncate">{nomeClienteExibido}</span>
                 </div>
               </div>
             </div>
@@ -511,6 +562,7 @@ export function OrdensServico() {
 
               {fields.map((field, index) => {
                 const linhaAtual = itensWatch?.[index]
+                const itemIdAtual = Number(linhaAtual?.item_id || 0)
                 const subtotalLinha = calcularTotalLinhaCentavos(
                   linhaAtual?.quantidade ?? "",
                   linhaAtual?.valor_unitario ?? "",
@@ -519,94 +571,121 @@ export function OrdensServico() {
                 return (
                   <div
                     key={field.id}
-                    className="grid grid-cols-1 items-start gap-2 rounded-md border p-2 sm:grid-cols-12"
+                    className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3 sm:p-4"
                   >
-                    <div className="flex flex-col gap-1 sm:col-span-4">
-                      <Label htmlFor={`itens.${index}.item_id`}>Item</Label>
-                      <select
-                        id={`itens.${index}.item_id`}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                        {...register(`itens.${index}.item_id`, {
-                          valueAsNumber: true,
-                        })}
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Item #{index + 1}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => remove(index)}
                       >
-                        <option value={0}>Selecione...</option>
-                        {opcoesItens.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.nome}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.itens?.[index]?.item_id && (
-                        <p className="text-xs text-destructive">
-                          {errors.itens[index]?.item_id?.message}
-                        </p>
-                      )}
+                        Remover item
+                      </Button>
                     </div>
 
-                    <div className="flex flex-col gap-1 sm:col-span-2">
-                      <Label htmlFor={`itens.${index}.tipo_id`}>Tipo</Label>
-                      <select
-                        id={`itens.${index}.tipo_id`}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                        {...register(`itens.${index}.tipo_id`, {
-                          valueAsNumber: true,
-                        })}
-                      >
-                        {Object.entries(TIPO_ITEM_LABELS).map(
-                          ([codigo, label]) => (
-                            <option key={codigo} value={Number(codigo)}>
-                              {label}
-                            </option>
-                          ),
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+                      <div className="flex flex-col gap-1.5 sm:col-span-7">
+                        <Label htmlFor={`itens.${index}.item_id`}>Item</Label>
+                        <CampoBuscaModal
+                          id={`itens.${index}.item_id`}
+                          valorId={itemIdAtual}
+                          textoSelecionado={obterNomeItem(itemIdAtual)}
+                          placeholder="Clique na lupa para selecionar um item..."
+                          rotuloBotaoLupa="Pesquisar item"
+                          tituloModal="Selecionar item"
+                          descricaoModal="Busque e selecione o item (peça ou serviço) do catálogo."
+                          placeholderBusca="Buscar item por nome..."
+                          busca={buscaItemModal}
+                          onBuscaChange={setBuscaItemModal}
+                          carregando={carregandoItens}
+                          mensagemVazio="Nenhum item encontrado."
+                          opcoes={opcoesItens.map((item) => ({
+                            id: item.id,
+                            titulo: item.nome,
+                          }))}
+                          onSelecionar={(idEscolhido) => {
+                            const achado =
+                              opcoesItens.find((i) => i.id === idEscolhido) ??
+                              null
+                            if (achado) {
+                              setItensSelecionadosCache((prev) => ({
+                                ...prev,
+                                [achado.id]: achado,
+                              }))
+                            }
+                            setValue(`itens.${index}.item_id`, idEscolhido, {
+                              shouldValidate: true,
+                            })
+                          }}
+                        />
+                        {errors.itens?.[index]?.item_id && (
+                          <p className="text-xs text-destructive">
+                            {errors.itens[index]?.item_id?.message}
+                          </p>
                         )}
-                      </select>
-                    </div>
+                      </div>
 
-                    <div className="flex flex-col gap-1 sm:col-span-2">
-                      <Label htmlFor={`itens.${index}.quantidade`}>Qtd.</Label>
-                      <Input
-                        id={`itens.${index}.quantidade`}
-                        placeholder="1.00"
-                        {...register(`itens.${index}.quantidade`)}
-                      />
-                      {errors.itens?.[index]?.quantidade && (
-                        <p className="text-xs text-destructive">
-                          {errors.itens[index]?.quantidade?.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-1 sm:col-span-2">
-                      <Label htmlFor={`itens.${index}.valor_unitario`}>
-                        Valor unit. (R$)
-                      </Label>
-                      <Input
-                        id={`itens.${index}.valor_unitario`}
-                        placeholder="150.00"
-                        {...register(`itens.${index}.valor_unitario`)}
-                      />
-                      {errors.itens?.[index]?.valor_unitario && (
-                        <p className="text-xs text-destructive">
-                          {errors.itens[index]?.valor_unitario?.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-1 sm:col-span-2">
-                      <span className="text-sm font-medium">Subtotal</span>
-                      <div className="flex h-9 items-center justify-between gap-1">
-                        <span className="text-xs font-medium">
-                          {formatarMoedaCentavos(subtotalLinha)}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => remove(index)}
+                      <div className="flex flex-col gap-1.5 sm:col-span-5">
+                        <Label htmlFor={`itens.${index}.tipo_id`}>Tipo</Label>
+                        <select
+                          id={`itens.${index}.tipo_id`}
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                          {...register(`itens.${index}.tipo_id`, {
+                            valueAsNumber: true,
+                          })}
                         >
-                          Remover
-                        </Button>
+                          {Object.entries(TIPO_ITEM_LABELS).map(
+                            ([codigo, label]) => (
+                              <option key={codigo} value={Number(codigo)}>
+                                {label}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 sm:col-span-8 sm:grid-cols-2">
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor={`itens.${index}.quantidade`}>Qtd.</Label>
+                          <Input
+                            id={`itens.${index}.quantidade`}
+                            placeholder="1.00"
+                            {...register(`itens.${index}.quantidade`)}
+                          />
+                          {errors.itens?.[index]?.quantidade && (
+                            <p className="text-xs text-destructive">
+                              {errors.itens[index]?.quantidade?.message}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor={`itens.${index}.valor_unitario`}>
+                            Valor unit. (R$)
+                          </Label>
+                          <Input
+                            id={`itens.${index}.valor_unitario`}
+                            placeholder="150.00"
+                            {...register(`itens.${index}.valor_unitario`)}
+                          />
+                          {errors.itens?.[index]?.valor_unitario && (
+                            <p className="text-xs text-destructive">
+                              {errors.itens[index]?.valor_unitario?.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5 sm:col-span-4">
+                        <span className="text-sm font-medium">Subtotal</span>
+                        <div className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm font-semibold">
+                          {formatarMoedaCentavos(subtotalLinha)}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -73,7 +73,7 @@ def configurar_frontend_estatico(aplicacao: FastAPI, dist_dir: Path | None = Non
 
 
 app = FastAPI(
-    title="Oficina OS",
+    title="EVR Retifica",
     dependencies=[Depends(exigir_sessao_exceto_publicas)],
 )
 
