@@ -1,6 +1,10 @@
 from app.schemas.auth import LoginInput, UsuarioOutput
 from app.schemas.cliente import ClienteInput, ClienteOutput
 from app.schemas.comum import PaginacaoOutput
+from app.schemas.configuracao_sistema import (
+    ConfiguracaoSistemaResponse,
+    ConfiguracaoSistemaUpdate,
+)
 from app.schemas.item import ItemInput, ItemOutput
 from app.schemas.marca_veiculo import MarcaVeiculoInput, MarcaVeiculoOutput
 from app.schemas.orcamento import (
@@ -17,6 +21,8 @@ from app.schemas.ordem_servico import (
     OrdemServicoOutput,
 )
 from app.schemas.pessoa import (
+    EnderecoInput,
+    EnderecoOutput,
     PessoaInput,
     PessoaOutput,
     TelefoneInput,
@@ -34,6 +40,10 @@ from app.schemas.veiculo import (
 __all__ = [
     "ClienteInput",
     "ClienteOutput",
+    "ConfiguracaoSistemaResponse",
+    "ConfiguracaoSistemaUpdate",
+    "EnderecoInput",
+    "EnderecoOutput",
     "ItemInput",
     "ItemOrcamentoInput",
     "ItemOrcamentoOutput",

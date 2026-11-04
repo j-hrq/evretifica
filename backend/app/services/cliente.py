@@ -24,6 +24,7 @@ def _opcoes_carregamento_cliente():
     return (
         joinedload(Cliente.pessoa).joinedload(Pessoa.pessoa_fisica),
         joinedload(Cliente.pessoa).joinedload(Pessoa.pessoa_juridica),
+        joinedload(Cliente.pessoa).joinedload(Pessoa.endereco),
         joinedload(Cliente.pessoa).selectinload(Pessoa.telefones),
     )
 

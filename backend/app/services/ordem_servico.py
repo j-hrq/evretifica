@@ -26,6 +26,7 @@ def _opcoes_carregamento_ordem_servico():
         joinedload(OrdemServico.cliente)
         .joinedload(Cliente.pessoa)
         .joinedload(Pessoa.pessoa_juridica),
+        joinedload(OrdemServico.cliente).joinedload(Cliente.pessoa).joinedload(Pessoa.endereco),
         joinedload(OrdemServico.cliente).joinedload(Cliente.pessoa).selectinload(Pessoa.telefones),
         joinedload(OrdemServico.veiculo).joinedload(Veiculo.marca),
         joinedload(OrdemServico.veiculo)
@@ -36,6 +37,10 @@ def _opcoes_carregamento_ordem_servico():
         .joinedload(Veiculo.cliente)
         .joinedload(Cliente.pessoa)
         .joinedload(Pessoa.pessoa_juridica),
+        joinedload(OrdemServico.veiculo)
+        .joinedload(Veiculo.cliente)
+        .joinedload(Cliente.pessoa)
+        .joinedload(Pessoa.endereco),
         joinedload(OrdemServico.veiculo)
         .joinedload(Veiculo.cliente)
         .joinedload(Cliente.pessoa)

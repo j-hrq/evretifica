@@ -23,6 +23,7 @@ def _opcoes_carregamento_veiculo():
         joinedload(Veiculo.marca),
         joinedload(Veiculo.cliente).joinedload(Cliente.pessoa).joinedload(Pessoa.pessoa_fisica),
         joinedload(Veiculo.cliente).joinedload(Cliente.pessoa).joinedload(Pessoa.pessoa_juridica),
+        joinedload(Veiculo.cliente).joinedload(Cliente.pessoa).joinedload(Pessoa.endereco),
         joinedload(Veiculo.cliente).joinedload(Cliente.pessoa).selectinload(Pessoa.telefones),
     )
 

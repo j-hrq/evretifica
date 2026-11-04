@@ -9,7 +9,7 @@ from app.auth import exigir_sessao_exceto_publicas
 from app.exceptions import ConflitoError, NaoEncontradoError, RegraNegocioError
 from app.routers.auth import router as auth_router
 from app.routers.clientes import router as clientes_router
-from app.routers.configuracao_oficina import router as configuracao_oficina_router
+from app.routers.configuracao_sistema import router as configuracao_sistema_router
 from app.routers.health import router as health_router
 from app.routers.itens import router as itens_router
 from app.routers.marcas_veiculo import router as marcas_veiculo_router
@@ -121,5 +121,5 @@ app.include_router(veiculos_router)
 app.include_router(itens_router)
 app.include_router(orcamentos_router)
 app.include_router(ordens_servico_router)
-app.include_router(configuracao_oficina_router)
+app.include_router(configuracao_sistema_router)
 configurar_frontend_estatico(app)

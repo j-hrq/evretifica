@@ -34,6 +34,7 @@ import {
   TIPO_TELEFONE_LABELS,
   TipoTelefone,
   type ClienteFormValues,
+  type EnderecoPayload,
 } from "@/lib/validacao"
 
 function valoresIniciais(cliente: Cliente | null): ClienteFormValues {
@@ -43,23 +44,71 @@ function valoresIniciais(cliente: Cliente | null): ClienteFormValues {
       email: "",
       tipo_documento: "cpf",
       documento: "",
+      nome_fantasia: "",
+      inscricao_estadual: "",
       ativo: true,
+      endereco: {
+        logradouro: "",
+        numero: "",
+        complemento: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+        cep: "",
+      },
       telefones: [],
     }
   }
   const ehCnpj = Boolean(cliente.pessoa.cnpj)
+  const end = cliente.pessoa.endereco
   return {
     nome: cliente.pessoa.nome,
     email: cliente.pessoa.email ?? "",
     tipo_documento: ehCnpj ? "cnpj" : "cpf",
     documento: cliente.pessoa.cnpj ?? cliente.pessoa.cpf ?? "",
+    nome_fantasia: cliente.pessoa.nome_fantasia ?? "",
+    inscricao_estadual: cliente.pessoa.inscricao_estadual ?? "",
     ativo: cliente.ativo,
+    endereco: {
+      logradouro: end?.logradouro ?? "",
+      numero: end?.numero ?? "",
+      complemento: end?.complemento ?? "",
+      bairro: end?.bairro ?? "",
+      cidade: end?.cidade ?? "",
+      estado: end?.estado ?? "",
+      cep: end?.cep ?? "",
+    },
     telefones: cliente.pessoa.telefones.map((t) => ({
       ddd: t.ddd,
       telefone: t.telefone,
       tipo_id: t.tipo_id,
     })),
   }
+}
+
+function normalizarEnderecoPayload(
+  endereco: ClienteFormValues["endereco"],
+): EnderecoPayload | null {
+  if (!endereco) return null
+  const logradouro = endereco.logradouro.trim() || null
+  const numero = endereco.numero.trim() || null
+  const complemento = endereco.complemento.trim() || null
+  const bairro = endereco.bairro.trim() || null
+  const cidade = endereco.cidade.trim() || null
+  const estado = endereco.estado.trim().toUpperCase() || null
+  const cep = endereco.cep.trim() || null
+  if (
+    !logradouro &&
+    !numero &&
+    !complemento &&
+    !bairro &&
+    !cidade &&
+    !estado &&
+    !cep
+  ) {
+    return null
+  }
+  return { logradouro, numero, complemento, bairro, cidade, estado, cep }
 }
 
 export function Clientes() {
@@ -125,6 +174,7 @@ export function Clientes() {
 
   async function onSubmit(valores: ClienteFormValues) {
     setErroFormulario(null)
+    const ehCnpj = valores.tipo_documento === "cnpj"
     const payload: ClientePayload = {
       ativo: valores.ativo,
       pessoa: {
@@ -134,10 +184,16 @@ export function Clientes() {
           valores.tipo_documento === "cpf"
             ? valores.documento.replace(/[.\-\s]/g, "")
             : null,
-        cnpj:
-          valores.tipo_documento === "cnpj"
-            ? valores.documento.replace(/[.\-/\s]/g, "")
+        cnpj: ehCnpj ? valores.documento.replace(/[.\-/\s]/g, "") : null,
+        nome_fantasia:
+          ehCnpj && valores.nome_fantasia?.trim()
+            ? valores.nome_fantasia.trim()
             : null,
+        inscricao_estadual:
+          ehCnpj && valores.inscricao_estadual?.trim()
+            ? valores.inscricao_estadual.trim()
+            : null,
+        endereco: normalizarEnderecoPayload(valores.endereco),
         telefones: valores.telefones.map((t) => ({
           ddd: t.ddd.trim(),
           telefone: t.telefone.replace(/[-\s]/g, ""),
@@ -330,7 +386,8 @@ export function Clientes() {
               {clienteEmEdicao ? "Editar cliente" : "Novo cliente"}
             </DialogTitle>
             <DialogDescription>
-              Preencha os dados da pessoa, documento e telefones do cliente.
+              Preencha os dados da pessoa, documento, endereço e telefones do
+              cliente.
             </DialogDescription>
           </DialogHeader>
 
@@ -381,6 +438,22 @@ export function Clientes() {
               </div>
             </div>
 
+            {tipoDocumento === "cnpj" && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                  <Input id="nome_fantasia" {...register("nome_fantasia")} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                  <Input
+                    id="inscricao_estadual"
+                    {...register("inscricao_estadual")}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
               <input
                 id="ativo"
@@ -391,7 +464,64 @@ export function Clientes() {
               <Label htmlFor="ativo">Ativo</Label>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 border-t pt-3">
+              <span className="text-sm font-medium">Endereço</span>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+                <div className="flex flex-col gap-1.5 sm:col-span-3">
+                  <Label htmlFor="endereco.cep">CEP</Label>
+                  <Input
+                    id="endereco.cep"
+                    placeholder="44000-000"
+                    {...register("endereco.cep")}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 sm:col-span-6">
+                  <Label htmlFor="endereco.logradouro">Logradouro</Label>
+                  <Input
+                    id="endereco.logradouro"
+                    {...register("endereco.logradouro")}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 sm:col-span-3">
+                  <Label htmlFor="endereco.numero">Número</Label>
+                  <Input
+                    id="endereco.numero"
+                    {...register("endereco.numero")}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 sm:col-span-4">
+                  <Label htmlFor="endereco.complemento">Complemento</Label>
+                  <Input
+                    id="endereco.complemento"
+                    {...register("endereco.complemento")}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 sm:col-span-4">
+                  <Label htmlFor="endereco.bairro">Bairro</Label>
+                  <Input
+                    id="endereco.bairro"
+                    {...register("endereco.bairro")}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 sm:col-span-3">
+                  <Label htmlFor="endereco.cidade">Cidade</Label>
+                  <Input
+                    id="endereco.cidade"
+                    {...register("endereco.cidade")}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 sm:col-span-1">
+                  <Label htmlFor="endereco.estado">UF</Label>
+                  <Input
+                    id="endereco.estado"
+                    maxLength={2}
+                    {...register("endereco.estado")}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t pt-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Telefones</span>
                 <Button

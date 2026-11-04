@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { apiFetch, extrairErro } from "@/lib/api"
+import type { EnderecoOutput, EnderecoPayload } from "@/lib/validacao"
 
 export interface Telefone {
   id: number
@@ -16,6 +17,9 @@ export interface Pessoa {
   email: string | null
   cpf: string | null
   cnpj: string | null
+  nome_fantasia?: string | null
+  inscricao_estadual?: string | null
+  endereco?: EnderecoOutput | null
   telefones: Telefone[]
   data_criacao: string
   data_alteracao: string
@@ -51,6 +55,9 @@ export interface ClientePayload {
     email: string | null
     cpf: string | null
     cnpj: string | null
+    nome_fantasia?: string | null
+    inscricao_estadual?: string | null
+    endereco?: EnderecoPayload | null
     telefones: TelefonePayload[]
   }
 }

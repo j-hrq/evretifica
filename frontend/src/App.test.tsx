@@ -75,27 +75,42 @@ describe("Autenticação e rotas protegidas", () => {
           json: async () => ({ status: "ok" }),
         } as Response
       }
-      if (url === "/api/configuracao-oficina") {
+      if (url === "/api/configuracao-sistema") {
         return {
           ok: true,
           status: 200,
           json: async () => ({
             id: 1,
-            nome_fantasia: "EVR Retífica",
-            razao_social: "EVR Retífica",
-            cnpj_cpf: "077.125.515-29",
-            inscricao_estadual: null,
-            telefone: "(75) 99118-1598",
-            whatsapp: "(75) 99118-1598",
-            email: "evrretifica@gmail.com",
-            logradouro: "Rua São Salvador",
-            numero: "1996",
-            complemento: null,
-            bairro: "35º BI",
-            cidade: "Feira de Santana",
-            estado: "BA",
-            cep: "44094-060",
-            nome_responsavel: "Evandro Ramos Rosado",
+            pessoa_id: 1,
+            pessoa: {
+              id: 1,
+              nome: "Evandro Ramos Rosado",
+              email: "evrretifica@gmail.com",
+              cpf: "07712551529",
+              cnpj: null,
+              nome_fantasia: null,
+              inscricao_estadual: null,
+              endereco: {
+                id: 1,
+                logradouro: "Rua São Salvador",
+                numero: "1996",
+                complemento: null,
+                bairro: "35º BI",
+                cidade: "Feira de Santana",
+                estado: "BA",
+                cep: "44094-060",
+              },
+              telefones: [
+                {
+                  id: 1,
+                  numero: "75991181598",
+                  tipo_id: 2,
+                  tem_whatsapp: true,
+                },
+              ],
+              data_criacao: "2026-10-31T00:00:00Z",
+              data_alteracao: "2026-10-31T00:00:00Z",
+            },
             data_criacao: "2026-10-31T00:00:00Z",
             data_alteracao: "2026-10-31T00:00:00Z",
           }),

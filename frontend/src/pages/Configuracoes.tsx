@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Activity,
@@ -25,14 +25,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/hooks/useAuth"
 import {
-  useAtualizarConfiguracaoOficina,
-  useConfiguracaoOficina,
-} from "@/hooks/useConfiguracaoOficina"
+  useAtualizarConfiguracaoSistema,
+  useConfiguracaoSistema,
+} from "@/hooks/useConfiguracaoSistema"
 import { useTema, type PreferenciaTema } from "@/hooks/useTema"
 import { apiFetch } from "@/lib/api"
 import {
-  configuracaoOficinaFormSchema,
-  type ConfiguracaoOficinaFormValues,
+  configuracaoSistemaFormSchema,
+  TipoTelefone,
+  type ConfiguracaoSistemaFormValues,
+  type ConfiguracaoSistemaPayload,
+  type EnderecoPayload,
 } from "@/lib/validacao"
 
 interface HealthResponse {
@@ -65,74 +68,144 @@ const OPCOES_TEMA: {
   },
 ]
 
+function normalizarEndereco(
+  endereco: ConfiguracaoSistemaFormValues["endereco"],
+): EnderecoPayload | null {
+  const logradouro = endereco.logradouro.trim() || null
+  const numero = endereco.numero.trim() || null
+  const complemento = endereco.complemento.trim() || null
+  const bairro = endereco.bairro.trim() || null
+  const cidade = endereco.cidade.trim() || null
+  const estado = endereco.estado.trim().toUpperCase() || null
+  const cep = endereco.cep.trim() || null
+  if (
+    !logradouro &&
+    !numero &&
+    !complemento &&
+    !bairro &&
+    !cidade &&
+    !estado &&
+    !cep
+  ) {
+    return null
+  }
+  return { logradouro, numero, complemento, bairro, cidade, estado, cep }
+}
+
 export function Configuracoes() {
   const { usuario } = useAuth()
   const { tema, definirTema } = useTema()
   const [status, setStatus] = useState<string>("carregando...")
   const [carregandoHealth, setCarregandoHealth] = useState<boolean>(true)
 
-  const { data: dadosOficina, isLoading: carregandoOficina } =
-    useConfiguracaoOficina()
-  const atualizarMutation = useAtualizarConfiguracaoOficina()
+  const { data: dadosConfiguracao, isLoading: carregandoOficina } =
+    useConfiguracaoSistema()
+  const atualizarMutation = useAtualizarConfiguracaoSistema()
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null)
   const [mensagemErro, setMensagemErro] = useState<string | null>(null)
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<ConfiguracaoOficinaFormValues>({
-    resolver: zodResolver(configuracaoOficinaFormSchema),
+  } = useForm<ConfiguracaoSistemaFormValues>({
+    resolver: zodResolver(configuracaoSistemaFormSchema),
     defaultValues: {
-      nome_fantasia: "EVR Retífica",
-      razao_social: "",
-      cnpj_cpf: "",
-      inscricao_estadual: "",
-      telefone: "",
-      whatsapp: "",
+      nome: "EVR Retífica",
       email: "",
-      logradouro: "",
-      numero: "",
-      complemento: "",
-      bairro: "",
-      cidade: "",
-      estado: "",
-      cep: "",
-      nome_responsavel: "",
+      tipo_documento: "cpf",
+      documento: "07712551529",
+      nome_fantasia: "",
+      inscricao_estadual: "",
+      endereco: {
+        logradouro: "",
+        numero: "",
+        complemento: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+        cep: "",
+      },
+      telefones: [],
     },
   })
 
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "telefones",
+  })
+
   useEffect(() => {
-    if (dadosOficina) {
+    if (dadosConfiguracao?.pessoa) {
+      const p = dadosConfiguracao.pessoa
+      const ehCnpj = Boolean(p.cnpj)
+      const end = p.endereco
       reset({
-        nome_fantasia: dadosOficina.nome_fantasia ?? "",
-        razao_social: dadosOficina.razao_social ?? "",
-        cnpj_cpf: dadosOficina.cnpj_cpf ?? "",
-        inscricao_estadual: dadosOficina.inscricao_estadual ?? "",
-        telefone: dadosOficina.telefone ?? "",
-        whatsapp: dadosOficina.whatsapp ?? "",
-        email: dadosOficina.email ?? "",
-        logradouro: dadosOficina.logradouro ?? "",
-        numero: dadosOficina.numero ?? "",
-        complemento: dadosOficina.complemento ?? "",
-        bairro: dadosOficina.bairro ?? "",
-        cidade: dadosOficina.cidade ?? "",
-        estado: dadosOficina.estado ?? "",
-        cep: dadosOficina.cep ?? "",
-        nome_responsavel: dadosOficina.nome_responsavel ?? "",
+        nome: p.nome ?? "",
+        email: p.email ?? "",
+        tipo_documento: ehCnpj ? "cnpj" : "cpf",
+        documento: p.cnpj ?? p.cpf ?? "",
+        nome_fantasia: p.nome_fantasia ?? "",
+        inscricao_estadual: p.inscricao_estadual ?? "",
+        endereco: {
+          logradouro: end?.logradouro ?? "",
+          numero: end?.numero ?? "",
+          complemento: end?.complemento ?? "",
+          bairro: end?.bairro ?? "",
+          cidade: end?.cidade ?? "",
+          estado: end?.estado ?? "",
+          cep: end?.cep ?? "",
+        },
+        telefones: p.telefones.map((t) => ({
+          ddd: t.ddd,
+          telefone: t.telefone,
+          tipo_id: t.tipo_id,
+        })),
       })
     }
-  }, [dadosOficina, reset])
+  }, [dadosConfiguracao, reset])
 
   const valoresAtuais = watch()
+  const ehCnpj = valoresAtuais.tipo_documento === "cnpj"
+  const primeiroTelefone = valoresAtuais.telefones[0]
+  const telefoneExibido = primeiroTelefone?.telefone
+    ? `(${primeiroTelefone.ddd}) ${primeiroTelefone.telefone}`
+    : null
 
-  async function onSalvarOficina(valores: ConfiguracaoOficinaFormValues) {
+  async function onSalvarOficina(valores: ConfiguracaoSistemaFormValues) {
     setMensagemSucesso(null)
     setMensagemErro(null)
+    const usarCnpj = valores.tipo_documento === "cnpj"
+    const payload: ConfiguracaoSistemaPayload = {
+      pessoa: {
+        nome: valores.nome.trim(),
+        email: valores.email.trim() || null,
+        cpf:
+          valores.tipo_documento === "cpf"
+            ? valores.documento.replace(/[.\-\s]/g, "")
+            : null,
+        cnpj: usarCnpj ? valores.documento.replace(/[.\-/\s]/g, "") : null,
+        nome_fantasia:
+          usarCnpj && valores.nome_fantasia.trim()
+            ? valores.nome_fantasia.trim()
+            : null,
+        inscricao_estadual:
+          usarCnpj && valores.inscricao_estadual.trim()
+            ? valores.inscricao_estadual.trim()
+            : null,
+        endereco: normalizarEndereco(valores.endereco),
+        telefones: valores.telefones.map((t) => ({
+          ddd: t.ddd.trim(),
+          telefone: t.telefone.replace(/[-\s]/g, ""),
+          tipo_id: Number(t.tipo_id),
+        })),
+      },
+    }
     try {
-      await atualizarMutation.mutateAsync(valores)
+      await atualizarMutation.mutateAsync(payload)
       setMensagemSucesso("Dados da oficina salvos com sucesso!")
       setTimeout(() => setMensagemSucesso(null), 4000)
     } catch (err) {
@@ -206,27 +279,31 @@ export function Configuracoes() {
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div className="flex flex-col gap-0.5 text-xs">
                 <span className="text-sm font-bold tracking-tight text-foreground uppercase">
-                  {valoresAtuais.nome_fantasia || "EVR RETÍFICA"}
+                  {valoresAtuais.nome_fantasia ||
+                    valoresAtuais.nome ||
+                    "EVR RETÍFICA"}
                 </span>
-                {valoresAtuais.cnpj_cpf && (
+                {valoresAtuais.documento && (
                   <span className="text-muted-foreground">
-                    CPF/CNPJ: {valoresAtuais.cnpj_cpf}
+                    CPF/CNPJ: {valoresAtuais.documento}
                   </span>
                 )}
                 <span className="text-muted-foreground">
-                  {valoresAtuais.logradouro || "Rua São Salvador"}
-                  {valoresAtuais.numero ? `, ${valoresAtuais.numero}` : ", 1996"}
-                  {valoresAtuais.complemento
-                    ? ` - ${valoresAtuais.complemento}`
+                  {valoresAtuais.endereco.logradouro || "Rua São Salvador"}
+                  {valoresAtuais.endereco.numero
+                    ? `, ${valoresAtuais.endereco.numero}`
+                    : ", 1996"}
+                  {valoresAtuais.endereco.complemento
+                    ? ` - ${valoresAtuais.endereco.complemento}`
                     : ""}
                 </span>
                 <span className="text-muted-foreground">
-                  {valoresAtuais.bairro || "35º BI"},{" "}
-                  {valoresAtuais.cidade || "Feira de Santana"}-
-                  {valoresAtuais.estado || "BA"}
+                  {valoresAtuais.endereco.bairro || "35º BI"},{" "}
+                  {valoresAtuais.endereco.cidade || "Feira de Santana"}-
+                  {valoresAtuais.endereco.estado || "BA"}
                 </span>
                 <span className="text-muted-foreground">
-                  CEP {valoresAtuais.cep || "44094-060"}
+                  CEP {valoresAtuais.endereco.cep || "44094-060"}
                 </span>
               </div>
 
@@ -237,15 +314,10 @@ export function Configuracoes() {
                     {valoresAtuais.email}
                   </span>
                 )}
-                {(valoresAtuais.whatsapp || valoresAtuais.telefone) && (
+                {telefoneExibido && (
                   <span className="flex items-center gap-1.5 font-medium text-foreground sm:justify-end">
                     <Phone className="size-3" />
-                    {valoresAtuais.whatsapp || valoresAtuais.telefone}
-                  </span>
-                )}
-                {valoresAtuais.nome_responsavel && (
-                  <span className="mt-1 text-2xs text-muted-foreground">
-                    Responsável: {valoresAtuais.nome_responsavel}
+                    {telefoneExibido}
                   </span>
                 )}
               </div>
@@ -261,75 +333,19 @@ export function Configuracoes() {
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <Label htmlFor="nome_fantasia">
-                Nome Fantasia <span className="text-destructive">*</span>
+              <Label htmlFor="nome">
+                Nome / Razão Social <span className="text-destructive">*</span>
               </Label>
               <Input
-                id="nome_fantasia"
+                id="nome"
                 placeholder="Ex: EVR Retífica"
-                {...register("nome_fantasia")}
+                {...register("nome")}
               />
-              {errors.nome_fantasia && (
+              {errors.nome && (
                 <p className="text-xs text-destructive">
-                  {errors.nome_fantasia.message}
+                  {errors.nome.message}
                 </p>
               )}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="razao_social">Razão Social</Label>
-              <Input
-                id="razao_social"
-                placeholder="Ex: EVR Retífica Ltda"
-                {...register("razao_social")}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="cnpj_cpf">CPF ou CNPJ</Label>
-              <Input
-                id="cnpj_cpf"
-                placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                {...register("cnpj_cpf")}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-              <Input
-                id="inscricao_estadual"
-                placeholder="Ex: ISENTO ou 123456789"
-                {...register("inscricao_estadual")}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="nome_responsavel">
-                Nome do Responsável (Assinatura)
-              </Label>
-              <Input
-                id="nome_responsavel"
-                placeholder="Ex: Evandro Ramos Rosado"
-                {...register("nome_responsavel")}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="whatsapp">WhatsApp / Celular</Label>
-              <Input
-                id="whatsapp"
-                placeholder="(75) 99118-1598"
-                {...register("whatsapp")}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="telefone">Telefone Fixo</Label>
-              <Input
-                id="telefone"
-                placeholder="(75) 3221-0000"
-                {...register("telefone")}
-              />
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -341,6 +357,57 @@ export function Configuracoes() {
                 {...register("email")}
               />
             </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="tipo_documento">Tipo de Documento</Label>
+              <select
+                id="tipo_documento"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                {...register("tipo_documento")}
+              >
+                <option value="cpf">CPF</option>
+                <option value="cnpj">CNPJ</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <Label htmlFor="documento">
+                {ehCnpj ? "CNPJ" : "CPF"}{" "}
+                <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="documento"
+                placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                {...register("documento")}
+              />
+              {errors.documento && (
+                <p className="text-xs text-destructive">
+                  {errors.documento.message}
+                </p>
+              )}
+            </div>
+
+            {ehCnpj && (
+              <>
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                  <Input
+                    id="nome_fantasia"
+                    placeholder="Ex: EVR Retífica"
+                    {...register("nome_fantasia")}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                  <Input
+                    id="inscricao_estadual"
+                    placeholder="Ex: ISENTO ou 123456789"
+                    {...register("inscricao_estadual")}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <div className="border-t pt-4">
@@ -351,7 +418,11 @@ export function Configuracoes() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
               <div className="flex flex-col gap-1.5 sm:col-span-3">
                 <Label htmlFor="cep">CEP</Label>
-                <Input id="cep" placeholder="44094-060" {...register("cep")} />
+                <Input
+                  id="cep"
+                  placeholder="44094-060"
+                  {...register("endereco.cep")}
+                />
               </div>
 
               <div className="flex flex-col gap-1.5 sm:col-span-6">
@@ -359,13 +430,17 @@ export function Configuracoes() {
                 <Input
                   id="logradouro"
                   placeholder="Rua São Salvador"
-                  {...register("logradouro")}
+                  {...register("endereco.logradouro")}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5 sm:col-span-3">
                 <Label htmlFor="numero">Número</Label>
-                <Input id="numero" placeholder="1996" {...register("numero")} />
+                <Input
+                  id="numero"
+                  placeholder="1996"
+                  {...register("endereco.numero")}
+                />
               </div>
 
               <div className="flex flex-col gap-1.5 sm:col-span-4">
@@ -373,7 +448,7 @@ export function Configuracoes() {
                 <Input
                   id="complemento"
                   placeholder="Galpão / Sala"
-                  {...register("complemento")}
+                  {...register("endereco.complemento")}
                 />
               </div>
 
@@ -382,7 +457,7 @@ export function Configuracoes() {
                 <Input
                   id="bairro"
                   placeholder="35º BI"
-                  {...register("bairro")}
+                  {...register("endereco.bairro")}
                 />
               </div>
 
@@ -391,7 +466,7 @@ export function Configuracoes() {
                 <Input
                   id="cidade"
                   placeholder="Feira de Santana"
-                  {...register("cidade")}
+                  {...register("endereco.cidade")}
                 />
               </div>
 
@@ -401,10 +476,103 @@ export function Configuracoes() {
                   id="estado"
                   placeholder="BA"
                   maxLength={2}
-                  {...register("estado")}
+                  {...register("endereco.estado")}
                 />
               </div>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-3 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Phone className="size-3.5" />
+                Telefones
+              </h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  append({
+                    ddd: "",
+                    telefone: "",
+                    tipo_id: TipoTelefone.WHATSAPP,
+                  })
+                }
+              >
+                Adicionar telefone
+              </Button>
+            </div>
+
+            {fields.map((field, index) => (
+              <div
+                key={field.id}
+                className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3 sm:p-4"
+              >
+                <div className="flex items-center justify-between border-b pb-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Telefone #{index + 1}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => remove(index)}
+                  >
+                    Remover
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+                  <div className="flex flex-col gap-1.5 sm:col-span-3">
+                    <Label htmlFor={`telefones.${index}.ddd`}>DDD</Label>
+                    <Input
+                      id={`telefones.${index}.ddd`}
+                      placeholder="75"
+                      {...register(`telefones.${index}.ddd`)}
+                    />
+                    {errors.telefones?.[index]?.ddd && (
+                      <p className="text-xs text-destructive">
+                        {errors.telefones[index]?.ddd?.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-5">
+                    <Label htmlFor={`telefones.${index}.telefone`}>Número</Label>
+                    <Input
+                      id={`telefones.${index}.telefone`}
+                      placeholder="991181598"
+                      {...register(`telefones.${index}.telefone`)}
+                    />
+                    {errors.telefones?.[index]?.telefone && (
+                      <p className="text-xs text-destructive">
+                        {errors.telefones[index]?.telefone?.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-4">
+                    <Label htmlFor={`telefones.${index}.tipo_id`}>
+                      Tipo de telefone
+                    </Label>
+                    <select
+                      id={`telefones.${index}.tipo_id`}
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      {...register(`telefones.${index}.tipo_id`, {
+                        valueAsNumber: true,
+                      })}
+                    >
+                      <option value={TipoTelefone.CELULAR}>Celular</option>
+                      <option value={TipoTelefone.FIXO}>Fixo</option>
+                      <option value={TipoTelefone.WHATSAPP}>WhatsApp</option>
+                      <option value={TipoTelefone.COMERCIAL}>Comercial</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {mensagemSucesso && (
