@@ -30,9 +30,16 @@ SPEC.md         produto e regras de negócio
 
 ## Comandos
 
+Na raiz (multiplataforma via `scripts/cli.mjs`):
+- Configuração completa: `npm run setup` (cria `.env`, `backend/.venv`, instala deps, aplica migrations, roda `seed_marcas`, instala e compila o frontend e cria o usuário se o banco estiver sem usuários)
+- Produção/rede local: `npm run backend`
+- Dev backend: `npm run dev:backend`
+- Dev frontend: `npm run dev:frontend`
+- Seeds: `npm run seed`, `npm run seed:marcas` e `npm run seed:massa`
+
 Backend (em `backend/`):
 - Instalar: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements-dev.txt`
-- Dev: `uvicorn app.main:app --reload --port 8000` (ou `npm run backend` na raiz)
+- Dev: `uvicorn app.main:app --reload --port 8000` (ou `npm run dev:backend` na raiz)
 - Testes: `pytest`
 - Lint: `ruff check . && ruff format --check .`
 - Migration: `alembic revision --autogenerate -m "mensagem"` e `alembic upgrade head`

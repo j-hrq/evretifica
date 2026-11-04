@@ -7,7 +7,7 @@ from app.models.enums import SituacaoAvaliacao
 from app.models.usuario import Usuario
 from app.schemas.comum import PaginacaoOutput
 from app.schemas.ordem_servico import OrdemServicoInput, OrdemServicoOutput
-from app.services.configuracao_oficina import obter_ou_criar_configuracao_oficina
+from app.services.configuracao_sistema import obter_ou_criar_configuracao_sistema
 from app.services.gerador_pdf import gerar_pdf_ordem_servico
 from app.services.ordem_servico import (
     atualizar_ordem_servico,
@@ -51,7 +51,7 @@ def baixar_pdf(
     db: Session = Depends(get_db),  # noqa: B008
 ) -> Response:
     os_obj = obter_ordem_servico(db, ordem_servico_id)
-    oficina = obter_ou_criar_configuracao_oficina(db)
+    oficina = obter_ou_criar_configuracao_sistema(db)
     pdf_bytes = gerar_pdf_ordem_servico(os_obj, oficina)
     nome_arquivo = f"OS-{os_obj.numero}.pdf"
     return Response(

@@ -22,6 +22,7 @@ def _opcoes_carregamento_orcamento():
     return (
         joinedload(Orcamento.cliente).joinedload(Cliente.pessoa).joinedload(Pessoa.pessoa_fisica),
         joinedload(Orcamento.cliente).joinedload(Cliente.pessoa).joinedload(Pessoa.pessoa_juridica),
+        joinedload(Orcamento.cliente).joinedload(Cliente.pessoa).joinedload(Pessoa.endereco),
         joinedload(Orcamento.cliente).joinedload(Cliente.pessoa).selectinload(Pessoa.telefones),
         joinedload(Orcamento.veiculo).joinedload(Veiculo.marca),
         joinedload(Orcamento.veiculo)
@@ -32,6 +33,10 @@ def _opcoes_carregamento_orcamento():
         .joinedload(Veiculo.cliente)
         .joinedload(Cliente.pessoa)
         .joinedload(Pessoa.pessoa_juridica),
+        joinedload(Orcamento.veiculo)
+        .joinedload(Veiculo.cliente)
+        .joinedload(Cliente.pessoa)
+        .joinedload(Pessoa.endereco),
         joinedload(Orcamento.veiculo)
         .joinedload(Veiculo.cliente)
         .joinedload(Cliente.pessoa)

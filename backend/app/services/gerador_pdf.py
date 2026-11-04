@@ -15,8 +15,8 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from app.models.configuracao_oficina import ConfiguracaoOficina
-from app.models.enums import SituacaoAvaliacao, TipoItem
+from app.models.configuracao_sistema import ConfiguracaoSistema
+from app.models.enums import SituacaoAvaliacao, TipoItem, TipoTelefone
 from app.models.orcamento import Orcamento
 from app.models.ordem_servico import OrdemServico
 
@@ -228,30 +228,35 @@ def _criar_estilos() -> dict[str, ParagraphStyle]:
 
 
 def _montar_cabecalho_oficina(
-    oficina: ConfiguracaoOficina, data_documento: datetime, estilos: dict[str, ParagraphStyle]
+    oficina: ConfiguracaoSistema,
+    data_documento: date | datetime,
+    estilos: dict[str, ParagraphStyle],
 ) -> Table:
-    nome = (oficina.nome_fantasia or "EVR RETÍFICA").upper()
-    doc = f"CPF/CNPJ: {oficina.cnpj_cpf}" if oficina.cnpj_cpf else ""
+    p = oficina.pessoa
+    nome = (p.nome_fantasia or p.nome or "EVR RETÍFICA").upper()
+    doc_val = p.cnpj or p.cpf
+    doc = f"CPF/CNPJ: {doc_val}" if doc_val else ""
 
+    end = p.endereco
     end_partes = []
-    if oficina.logradouro:
-        linha1 = f"{oficina.logradouro}, {oficina.numero or 'S/N'}"
-        if oficina.complemento:
-            linha1 += f" - {oficina.complemento}"
+    if end and end.logradouro:
+        linha1 = f"{end.logradouro}, {end.numero or 'S/N'}"
+        if end.complemento:
+            linha1 += f" - {end.complemento}"
         end_partes.append(linha1)
 
     cidade_uf = []
-    if oficina.bairro:
-        cidade_uf.append(oficina.bairro)
-    if oficina.cidade and oficina.estado:
-        cidade_uf.append(f"{oficina.cidade}-{oficina.estado}")
-    elif oficina.cidade:
-        cidade_uf.append(oficina.cidade)
+    if end and end.bairro:
+        cidade_uf.append(end.bairro)
+    if end and end.cidade and end.estado:
+        cidade_uf.append(f"{end.cidade}-{end.estado}")
+    elif end and end.cidade:
+        cidade_uf.append(end.cidade)
     if cidade_uf:
         end_partes.append(", ".join(cidade_uf))
 
-    if oficina.cep:
-        end_partes.append(f"CEP {oficina.cep}")
+    if end and end.cep:
+        end_partes.append(f"CEP {end.cep}")
 
     col_esq_html = f"<b>{nome}</b><br/>"
     if doc:
@@ -259,9 +264,14 @@ def _montar_cabecalho_oficina(
     col_esq_html += "<br/>".join(end_partes)
 
     col_dir_html = f"<b>{formatar_data(data_documento)}</b><br/>"
-    if oficina.email:
-        col_dir_html += f"{oficina.email}<br/>"
-    telefone_exibido = oficina.whatsapp or oficina.telefone
+    if p.email:
+        col_dir_html += f"{p.email}<br/>"
+
+    telefone_exibido = None
+    if p.telefones:
+        tel_wpp = next((t for t in p.telefones if t.tipo_id == TipoTelefone.WHATSAPP), None)
+        t_sel = tel_wpp or p.telefones[0]
+        telefone_exibido = f"({t_sel.ddd}) {t_sel.telefone}"
     if telefone_exibido:
         col_dir_html += f"{telefone_exibido}<br/>"
 
@@ -436,9 +446,9 @@ def _divisor() -> HRFlowable:
 
 
 def _montar_bloco_assinaturas(
-    data_documento: datetime,
+    data_documento: date | datetime,
     cidade: str,
-    oficina: ConfiguracaoOficina,
+    oficina: ConfiguracaoSistema,
     nome_cliente: str,
     estilos: dict[str, ParagraphStyle],
 ) -> list:
@@ -458,10 +468,11 @@ def _montar_bloco_assinaturas(
     )
     elementos.append(Spacer(1, 24))
 
-    nome_oficina = (oficina.nome_fantasia or "EVR RETÍFICA").upper()
+    p = oficina.pessoa
+    nome_oficina = (p.nome_fantasia or p.nome or "EVR RETÍFICA").upper()
     linha_oficina = f"______________________________________<br/><b>{nome_oficina}</b>"
-    if oficina.nome_responsavel:
-        linha_oficina += f"<br/>{oficina.nome_responsavel}"
+    if p.nome_fantasia and p.nome and p.nome.upper() != nome_oficina:
+        linha_oficina += f"<br/>{p.nome}"
 
     linha_cliente = f"______________________________________<br/><b>{nome_cliente}</b><br/>Cliente"
 
@@ -487,7 +498,7 @@ def _montar_bloco_assinaturas(
     return elementos
 
 
-def gerar_pdf_ordem_servico(os: OrdemServico, oficina: ConfiguracaoOficina) -> bytes:
+def gerar_pdf_ordem_servico(os: OrdemServico, oficina: ConfiguracaoSistema) -> bytes:
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -579,11 +590,16 @@ def gerar_pdf_ordem_servico(os: OrdemServico, oficina: ConfiguracaoOficina) -> b
         story.append(Spacer(1, 14))
 
     # 7. Assinaturas (KeepTogether para nunca quebrar)
+    cidade_oficina = (
+        oficina.pessoa.endereco.cidade
+        if oficina.pessoa.endereco and oficina.pessoa.endereco.cidade
+        else "Feira de Santana"
+    )
     story.append(
         KeepTogether(
             _montar_bloco_assinaturas(
                 data_documento=os.data_criacao,
-                cidade=oficina.cidade or "Feira de Santana",
+                cidade=cidade_oficina,
                 oficina=oficina,
                 nome_cliente=cliente_pessoa.nome,
                 estilos=estilos,
@@ -596,7 +612,7 @@ def gerar_pdf_ordem_servico(os: OrdemServico, oficina: ConfiguracaoOficina) -> b
     return buffer.getvalue()
 
 
-def gerar_pdf_orcamento(orcamento: Orcamento, oficina: ConfiguracaoOficina) -> bytes:
+def gerar_pdf_orcamento(orcamento: Orcamento, oficina: ConfiguracaoSistema) -> bytes:
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -696,11 +712,16 @@ def gerar_pdf_orcamento(orcamento: Orcamento, oficina: ConfiguracaoOficina) -> b
         story.append(Spacer(1, 14))
 
     # 7. Assinaturas
+    cidade_oficina = (
+        oficina.pessoa.endereco.cidade
+        if oficina.pessoa.endereco and oficina.pessoa.endereco.cidade
+        else "Feira de Santana"
+    )
     story.append(
         KeepTogether(
             _montar_bloco_assinaturas(
                 data_documento=orcamento.data_emissao,
-                cidade=oficina.cidade or "Feira de Santana",
+                cidade=cidade_oficina,
                 oficina=oficina,
                 nome_cliente=cliente_pessoa.nome,
                 estilos=estilos,

@@ -1,15 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { apiFetch, extrairErro } from "@/lib/api"
 import type {
-  ConfiguracaoOficinaFormValues,
-  ConfiguracaoOficinaOutput,
+  ConfiguracaoSistemaOutput,
+  ConfiguracaoSistemaPayload,
 } from "@/lib/validacao"
 
-export function useConfiguracaoOficina() {
-  return useQuery<ConfiguracaoOficinaOutput>({
-    queryKey: ["configuracao-oficina"],
+export function useConfiguracaoSistema() {
+  return useQuery<ConfiguracaoSistemaOutput>({
+    queryKey: ["configuracao-sistema"],
     queryFn: async () => {
-      const response = await apiFetch("/api/configuracao-oficina")
+      const response = await apiFetch("/api/configuracao-sistema")
       if (!response.ok) {
         throw new Error(
           await extrairErro(response, "Erro ao carregar dados da oficina."),
@@ -20,16 +20,16 @@ export function useConfiguracaoOficina() {
   })
 }
 
-export function useAtualizarConfiguracaoOficina() {
+export function useAtualizarConfiguracaoSistema() {
   const queryClient = useQueryClient()
 
   return useMutation<
-    ConfiguracaoOficinaOutput,
+    ConfiguracaoSistemaOutput,
     Error,
-    ConfiguracaoOficinaFormValues
+    ConfiguracaoSistemaPayload
   >({
     mutationFn: async (dados) => {
-      const response = await apiFetch("/api/configuracao-oficina", {
+      const response = await apiFetch("/api/configuracao-sistema", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dados),
@@ -42,7 +42,7 @@ export function useAtualizarConfiguracaoOficina() {
       return response.json()
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["configuracao-oficina"] })
+      void queryClient.invalidateQueries({ queryKey: ["configuracao-sistema"] })
     },
   })
 }

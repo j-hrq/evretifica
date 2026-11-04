@@ -2,7 +2,12 @@
   "name": "oficina-os",
   "private": true,
   "scripts": {
-    "backend": "cd backend && . .venv/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000",
-    "dev:backend": "cd backend && . .venv/bin/activate && uvicorn app.main:app --reload --port 8000"
+    "setup": "node scripts/cli.mjs setup",
+    "backend": "node scripts/cli.mjs backend",
+    "dev:backend": "node scripts/cli.mjs dev:backend",
+    "dev:frontend": "node scripts/cli.mjs dev:frontend",
+    "seed": "node scripts/cli.mjs seed",
+    "seed:marcas": "node scripts/cli.mjs seed:marcas",
+    "seed:massa": "node scripts/cli.mjs seed:massa"
   }
 }

@@ -18,6 +18,25 @@ pessoa_telefone = Table(
 )
 
 
+class Endereco(Base):
+    __tablename__ = "endereco"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    logradouro: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    numero: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    complemento: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    bairro: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    cidade: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    estado: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    cep: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    data_criacao: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    data_alteracao: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
+    )
+
+
 class PessoaFisica(Base):
     __tablename__ = "pessoa_fisica"
 
@@ -36,6 +55,8 @@ class PessoaJuridica(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     cnpj: Mapped[str] = mapped_column(String(14), nullable=False, unique=True)
+    nome_fantasia: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    inscricao_estadual: Mapped[str | None] = mapped_column(String(30), nullable=True)
     data_criacao: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )
@@ -78,6 +99,9 @@ class Pessoa(Base):
     pessoa_juridica_id: Mapped[int | None] = mapped_column(
         ForeignKey("pessoa_juridica.id"), nullable=True, unique=True
     )
+    endereco_id: Mapped[int | None] = mapped_column(
+        ForeignKey("endereco.id"), nullable=True, unique=True
+    )
     data_criacao: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )
@@ -87,6 +111,7 @@ class Pessoa(Base):
 
     pessoa_fisica: Mapped[PessoaFisica | None] = relationship("PessoaFisica")
     pessoa_juridica: Mapped[PessoaJuridica | None] = relationship("PessoaJuridica")
+    endereco: Mapped[Endereco | None] = relationship("Endereco")
     telefones: Mapped[list[Telefone]] = relationship("Telefone", secondary=pessoa_telefone)
 
     @property
@@ -96,3 +121,11 @@ class Pessoa(Base):
     @property
     def cnpj(self) -> str | None:
         return self.pessoa_juridica.cnpj if self.pessoa_juridica is not None else None
+
+    @property
+    def nome_fantasia(self) -> str | None:
+        return self.pessoa_juridica.nome_fantasia if self.pessoa_juridica is not None else None
+
+    @property
+    def inscricao_estadual(self) -> str | None:
+        return self.pessoa_juridica.inscricao_estadual if self.pessoa_juridica is not None else None

@@ -70,6 +70,18 @@ export function validarCnpj(valor: string): boolean {
   return Number(limpo[12]) === digito1 && Number(limpo[13]) === digito2
 }
 
+export const enderecoFormSchema = z.object({
+  logradouro: z.string().max(150),
+  numero: z.string().max(20),
+  complemento: z.string().max(100),
+  bairro: z.string().max(100),
+  cidade: z.string().max(100),
+  estado: z.string().max(2),
+  cep: z.string().max(10),
+})
+
+export type EnderecoFormValues = z.infer<typeof enderecoFormSchema>
+
 export const telefoneFormSchema = z.object({
   ddd: z
     .string()
@@ -91,7 +103,10 @@ export const clienteFormSchema = z
     email: z.string().trim().optional(),
     tipo_documento: z.enum(["cpf", "cnpj"]),
     documento: z.string().trim().min(1, "Documento é obrigatório."),
+    nome_fantasia: z.string().max(100).optional(),
+    inscricao_estadual: z.string().max(30).optional(),
     ativo: z.boolean(),
+    endereco: enderecoFormSchema.optional(),
     telefones: z.array(telefoneFormSchema),
   })
   .superRefine((dados, ctx) => {
@@ -264,7 +279,7 @@ export function normalizarQuantidadeDecimal(valor: string): string | null {
   if (centesimos <= 0) {
     return null
   }
-  return `${ Number(parteInteira)}.${parteDecimal.padEnd(2, "0")}`
+  return `${Number(parteInteira)}.${parteDecimal.padEnd(2, "0")}`
 }
 
 export function calcularTotalLinhaCentavos(
@@ -378,41 +393,47 @@ export const ordemServicoFormSchema = z.object({
 
 export type OrdemServicoFormValues = z.infer<typeof ordemServicoFormSchema>
 
-export const configuracaoOficinaFormSchema = z.object({
-  nome_fantasia: z
-    .string()
-    .trim()
-    .min(1, "Nome fantasia é obrigatório.")
-    .max(100, "Nome fantasia não pode exceder 100 caracteres."),
-  razao_social: z.string().max(150),
-  cnpj_cpf: z.string().max(20),
-  inscricao_estadual: z.string().max(30),
-  telefone: z.string().max(20),
-  whatsapp: z.string().max(20),
-  email: z.string().max(100),
-  logradouro: z.string().max(150),
-  numero: z.string().max(20),
-  complemento: z.string().max(100),
-  bairro: z.string().max(100),
-  cidade: z.string().max(100),
-  estado: z.string().max(2),
-  cep: z.string().max(10),
-  nome_responsavel: z.string().max(100),
-})
+export const configuracaoSistemaFormSchema = z
+  .object({
+    nome: z
+      .string()
+      .trim()
+      .min(1, "Nome / Razão Social é obrigatório.")
+      .max(150, "Nome não pode exceder 150 caracteres."),
+    email: z.string().max(100),
+    tipo_documento: z.enum(["cpf", "cnpj"]),
+    documento: z.string().trim().min(1, "CPF ou CNPJ é obrigatório."),
+    nome_fantasia: z.string().max(100),
+    inscricao_estadual: z.string().max(30),
+    endereco: enderecoFormSchema,
+    telefones: z.array(telefoneFormSchema),
+  })
+  .superRefine((dados, ctx) => {
+    if (dados.tipo_documento === "cpf") {
+      if (!validarCpf(dados.documento)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["documento"],
+          message: "CPF inválido.",
+        })
+      }
+    } else {
+      if (!validarCnpj(dados.documento)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["documento"],
+          message: "CNPJ inválido.",
+        })
+      }
+    }
+  })
 
-export type ConfiguracaoOficinaFormValues = z.infer<
-  typeof configuracaoOficinaFormSchema
+export type ConfiguracaoSistemaFormValues = z.infer<
+  typeof configuracaoSistemaFormSchema
 >
 
-export interface ConfiguracaoOficinaOutput {
+export interface EnderecoOutput {
   id: number
-  nome_fantasia: string
-  razao_social: string | null
-  cnpj_cpf: string | null
-  inscricao_estadual: string | null
-  telefone: string | null
-  whatsapp: string | null
-  email: string | null
   logradouro: string | null
   numero: string | null
   complemento: string | null
@@ -420,7 +441,60 @@ export interface ConfiguracaoOficinaOutput {
   cidade: string | null
   estado: string | null
   cep: string | null
-  nome_responsavel: string | null
+  data_criacao: string
+  data_alteracao: string
+}
+
+export interface EnderecoPayload {
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
+  cep: string | null
+}
+
+export interface ConfiguracaoSistemaPayload {
+  pessoa: {
+    nome: string
+    email: string | null
+    cpf: string | null
+    cnpj: string | null
+    nome_fantasia: string | null
+    inscricao_estadual: string | null
+    endereco: EnderecoPayload | null
+    telefones: {
+      ddd: string
+      telefone: string
+      tipo_id: number
+    }[]
+  }
+}
+
+export interface ConfiguracaoSistemaOutput {
+  id: number
+  pessoa_id: number
+  pessoa: {
+    id: number
+    nome: string
+    email: string | null
+    cpf: string | null
+    cnpj: string | null
+    nome_fantasia: string | null
+    inscricao_estadual: string | null
+    endereco: EnderecoOutput | null
+    telefones: {
+      id: number
+      ddd: string
+      telefone: string
+      tipo_id: number
+      data_criacao: string
+      data_alteracao: string
+    }[]
+    data_criacao: string
+    data_alteracao: string
+  }
   data_criacao: string
   data_alteracao: string
 }

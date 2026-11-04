@@ -73,6 +73,18 @@ describe("Página de Clientes", () => {
               email: "maria@teste.com",
               cpf: "52998224725",
               cnpj: null,
+              nome_fantasia: null,
+              inscricao_estadual: null,
+              endereco: {
+                id: 1,
+                logradouro: "Rua das Flores",
+                numero: "100",
+                complemento: null,
+                bairro: "Centro",
+                cidade: "Feira de Santana",
+                estado: "BA",
+                cep: "44000-000",
+              },
               telefones: [
                 {
                   id: 1,
@@ -120,7 +132,7 @@ describe("Página de Clientes", () => {
       expect(screen.getByText("CPF inválido.")).toBeInTheDocument()
     })
 
-    // Preenche corretamente e adiciona um telefone
+    // Preenche corretamente e adiciona endereço e telefone
     fireEvent.change(screen.getByLabelText("Nome"), {
       target: { value: "Maria Oliveira" },
     })
@@ -130,12 +142,21 @@ describe("Página de Clientes", () => {
     fireEvent.change(screen.getByLabelText("CPF"), {
       target: { value: "529.982.247-25" },
     })
+    fireEvent.change(screen.getByLabelText("Logradouro"), {
+      target: { value: "Rua das Flores" },
+    })
+    fireEvent.change(screen.getByLabelText("Cidade"), {
+      target: { value: "Feira de Santana" },
+    })
+    fireEvent.change(screen.getByLabelText("UF"), {
+      target: { value: "ba" },
+    })
 
     fireEvent.click(screen.getByRole("button", { name: "Adicionar telefone" }))
     fireEvent.change(screen.getByLabelText("DDD"), {
       target: { value: "11" },
     })
-    fireEvent.change(screen.getByLabelText("Número"), {
+    fireEvent.change(screen.getByPlaceholderText("988887777"), {
       target: { value: "98888-7777" },
     })
 
@@ -153,6 +174,17 @@ describe("Página de Clientes", () => {
               email: "maria@teste.com",
               cpf: "52998224725",
               cnpj: null,
+              nome_fantasia: null,
+              inscricao_estadual: null,
+              endereco: {
+                logradouro: "Rua das Flores",
+                numero: null,
+                complemento: null,
+                bairro: null,
+                cidade: "Feira de Santana",
+                estado: "BA",
+                cep: null,
+              },
               telefones: [{ ddd: "11", telefone: "988887777", tipo_id: 1 }],
             },
           }),

@@ -54,6 +54,66 @@ def validar_cnpj(valor: str) -> str:
     return limpo
 
 
+def _normalizar_texto_opcional(v: str | None) -> str | None:
+    if v is None:
+        return None
+    limpo = v.strip()
+    return limpo if limpo else None
+
+
+class EnderecoInput(BaseModel):
+    logradouro: str | None = Field(default=None, max_length=150)
+    numero: str | None = Field(default=None, max_length=20)
+    complemento: str | None = Field(default=None, max_length=100)
+    bairro: str | None = Field(default=None, max_length=100)
+    cidade: str | None = Field(default=None, max_length=100)
+    estado: str | None = Field(default=None, max_length=2)
+    cep: str | None = Field(default=None, max_length=10)
+
+    @field_validator(
+        "logradouro",
+        "numero",
+        "complemento",
+        "bairro",
+        "cidade",
+        "estado",
+        "cep",
+        mode="before",
+    )
+    @classmethod
+    def _normalizar_campos(cls, v: str | None) -> str | None:
+        return _normalizar_texto_opcional(v)
+
+    def possui_algum_campo(self) -> bool:
+        return any(
+            getattr(self, campo) is not None
+            for campo in (
+                "logradouro",
+                "numero",
+                "complemento",
+                "bairro",
+                "cidade",
+                "estado",
+                "cep",
+            )
+        )
+
+
+class EnderecoOutput(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    logradouro: str | None = None
+    numero: str | None = None
+    complemento: str | None = None
+    bairro: str | None = None
+    cidade: str | None = None
+    estado: str | None = None
+    cep: str | None = None
+    data_criacao: datetime
+    data_alteracao: datetime
+
+
 class TelefoneInput(BaseModel):
     ddd: str
     telefone: str
@@ -92,6 +152,9 @@ class PessoaInput(BaseModel):
     email: str | None = None
     cpf: str | None = None
     cnpj: str | None = None
+    nome_fantasia: str | None = Field(default=None, max_length=100)
+    inscricao_estadual: str | None = Field(default=None, max_length=30)
+    endereco: EnderecoInput | None = None
     telefones: list[TelefoneInput] = Field(default_factory=list)
 
     @field_validator("nome")
@@ -102,13 +165,10 @@ class PessoaInput(BaseModel):
             raise ValueError("Nome é obrigatório.")
         return limpo
 
-    @field_validator("email")
+    @field_validator("email", "nome_fantasia", "inscricao_estadual", mode="before")
     @classmethod
-    def _normalizar_email(cls, v: str | None) -> str | None:
-        if v is None:
-            return None
-        limpo = v.strip()
-        return limpo if limpo else None
+    def _normalizar_opcionais(cls, v: str | None) -> str | None:
+        return _normalizar_texto_opcional(v)
 
     @field_validator("cpf")
     @classmethod
@@ -147,6 +207,9 @@ class PessoaOutput(BaseModel):
     email: str | None = None
     cpf: str | None = None
     cnpj: str | None = None
+    nome_fantasia: str | None = None
+    inscricao_estadual: str | None = None
+    endereco: EnderecoOutput | None = None
     telefones: list[TelefoneOutput] = Field(default_factory=list)
     data_criacao: datetime
     data_alteracao: datetime
