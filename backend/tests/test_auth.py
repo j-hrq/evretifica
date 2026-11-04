@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import NOME_COOKIE_SESSAO, verificar_senha
 from app.schemas.pessoa import PessoaInput
-from app.seed import executar_seed
+from app.seed import executar_seed, executar_seed_se_vazio, possui_usuario_cadastrado
 from app.services.usuario import criar_usuario_com_pessoa
 
 
@@ -97,3 +97,23 @@ def test_script_seed_cria_pessoa_e_usuario_com_hash(db_session: Session) -> None
     assert usuario.pessoa.nome == "Oficina EV Retifica"
     assert usuario.pessoa.pessoa_juridica is not None
     assert usuario.pessoa.pessoa_juridica.cnpj == "11222333000181"
+
+
+def test_script_seed_se_vazio_pula_quando_ja_existe_usuario(db_session: Session) -> None:
+    assert possui_usuario_cadastrado(db_session) is False
+
+    respostas = iter(["Oficina EV Retifica", "11.222.333/0001-81", "oficina"])
+    criado = executar_seed_se_vazio(
+        db_session,
+        input_fn=lambda _prompt: next(respostas),
+        getpass_fn=lambda _prompt: "minha-senha-secreta",
+    )
+    assert criado is not None
+    assert possui_usuario_cadastrado(db_session) is True
+
+    segundo = executar_seed_se_vazio(
+        db_session,
+        input_fn=lambda _prompt: (_ for _ in ()).throw(AssertionError("Não deveria pedir input")),
+        getpass_fn=lambda _prompt: (_ for _ in ()).throw(AssertionError("Não deveria pedir senha")),
+    )
+    assert segundo is None

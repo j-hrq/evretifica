@@ -17,13 +17,42 @@ backend/
   tests/        testes automatizados do backend
 frontend/
   src/          components/ui/, pages/, lib/, hooks/
+scripts/        cli.mjs (automação multiplataforma da raiz)
 docs/           diagrama do modelo de dados
 SPEC.md         especificação funcional e regras de negócio
 ```
 
+## Configuração Rápida (Um Único Comando)
+
+Na raiz do repositório, execute:
+
+```bash
+npm run setup
+```
+
+Esse comando executa automaticamente toda a preparação do ambiente (compatível com Windows, Linux e macOS):
+1. Cria o arquivo `.env` a partir do `.env.example` (se não existir).
+2. Cria o ambiente virtual `backend/.venv` (se não existir).
+3. Instala as dependências do backend (`requirements-dev.txt`).
+4. Aplica as migrations do banco SQLite (`alembic upgrade head`).
+5. Popula as marcas de veículos iniciais (`app.seed_marcas`).
+6. Instala as dependências do frontend (`npm install`) e gera o build de produção (`npm run build`).
+7. Caso ainda não exista usuário no banco, solicita interativamente os dados para criar o usuário da oficina (`app.seed`).
+
+### Outros Comandos na Raiz
+
+- `npm run backend` — Inicia o servidor FastAPI em `0.0.0.0:8000` (servindo API + frontend compilado).
+- `npm run dev:backend` — Inicia o backend com `--reload` em `localhost:8000`.
+- `npm run dev:frontend` — Inicia o servidor de desenvolvimento Vite do frontend.
+- `npm run seed` — Cria um usuário da oficina interativamente.
+- `npm run seed:marcas` — Popula a lista inicial de marcas de veículos.
+- `npm run seed:massa` — Popula o banco com uma massa de teste de 100 registros por entidade.
+
+---
+
 ## Variáveis de Ambiente
 
-Crie um arquivo `.env` na raiz do projeto (ou em `backend/.env`) a partir do `.env.example`:
+O arquivo `.env` na raiz do projeto (ou em `backend/.env`) é gerado a partir do `.env.example`:
 
 ```bash
 cp .env.example .env
@@ -36,26 +65,23 @@ Variáveis utilizadas:
 
 > Nunca faça commit do arquivo `.env` nem de arquivos `*.db`.
 
-## Instalação e Configuração Inicial
+## Instalação Manual (Passo a Passo)
+
+Caso prefira rodar cada etapa manualmente sem o `npm run setup`:
 
 ### 1. Backend
 
 ```bash
 cd backend
-python3 -m venv .venv
-source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate  # No Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-```
-
-Aplique as migrations para criar o schema no SQLite:
-
-```bash
 alembic upgrade head
 ```
 
 ### 2. Seeds (Usuário da Oficina e Marcas de Veículo)
 
-Crie ou atualize o usuário único da oficina (os dados são solicitados de forma interativa no terminal):
+Crie o usuário da oficina:
 
 ```bash
 python -m app.seed
@@ -67,7 +93,7 @@ Popule a tabela de marcas de veículos com a lista inicial:
 python -m app.seed_marcas
 ```
 
-(Opcional) Popule o banco com uma massa de teste de 100 registros para cada entidade (clientes, marcas, veículos, itens, orçamentos e ordens de serviço):
+(Opcional) Popule o banco com uma massa de teste de 100 registros para cada entidade:
 
 ```bash
 python -m app.seed_massa_dados
@@ -76,8 +102,6 @@ python -m app.seed_massa_dados
 > Todos os scripts de seed são idempotentes e podem ser executados novamente com segurança.
 
 ### 3. Frontend
-
-Em outro terminal:
 
 ```bash
 cd frontend
@@ -88,10 +112,10 @@ npm install
 
 ### Rodar o Backend
 
-Direto da raiz do repositório (via script npm, que já acessa o `.venv` e inicia o uvicorn com reload):
+Direto da raiz do repositório:
 
 ```bash
-npm run backend
+npm run dev:backend
 ```
 
 Ou manualmente em `backend/` (com o ambiente virtual ativo):
@@ -104,7 +128,7 @@ A API ficará disponível em `http://localhost:8000/api` (healthcheck em `GET /a
 
 ### Rodar o Frontend
 
-Em `frontend/`:
+Direto da raiz (`npm run dev:frontend`) ou em `frontend/`:
 
 ```bash
 npm run dev
@@ -133,18 +157,17 @@ npm run typecheck
 
 Em produção, o FastAPI serve tanto a API (`/api/*`) quanto os arquivos estáticos do frontend compilado (`frontend/dist`) na mesma origem.
 
-1. Gere o build de produção do frontend:
+1. Gere o build de produção do frontend (já incluído no `npm run setup`):
 
 ```bash
 cd frontend
 npm run build
 ```
 
-2. Inicie o servidor FastAPI (em `backend/`, com `.venv` ativo e `.env` configurado):
+2. Inicie o servidor FastAPI a partir da raiz:
 
 ```bash
-cd ../backend
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+npm run backend
 ```
 
 O aplicativo completo (interface web + API) estará disponível em `http://localhost:8000`.
